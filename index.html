@@ -38,7 +38,6 @@
   @keyframes blink { 50% { border-color: transparent; } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-  /* Login success badge: small circle, draws a check, fades away on its own */
   #loginBadge { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 14px); right: 14px; z-index: 96; width: 38px; height: 38px; border-radius: 9999px; display: grid; place-items: center; background: rgba(16,185,129,.16); border: 1px solid rgba(52,211,153,.5); color: #6ee7b7; opacity: 0; pointer-events: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   #loginBadge.show { animation: badgeInOut 2.2s ease both; }
   #loginBadge path { stroke-dasharray: 24; stroke-dashoffset: 24; }
@@ -46,7 +45,6 @@
   @keyframes badgeInOut { 0% { opacity: 0; transform: scale(.6); } 15% { opacity: 1; transform: scale(1); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.08); } }
   @keyframes badgeDraw { to { stroke-dashoffset: 0; } }
 
-  /* Shared form / button / modal styles */
   .inp { width: 100%; padding: .55rem .75rem; border-radius: .75rem; background: #121222; border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 12px; outline: none; transition: border-color .15s; }
   .inp:focus { border-color: #a855f7; }
   .ide-btn { shrink: 0; flex-shrink: 0; display: inline-flex; align-items: center; gap: .375rem; padding: .3rem .65rem; border-radius: .6rem; font-size: 11px; font-weight: 500; white-space: nowrap; color: #a1a1aa; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); transition: background .15s, color .15s; }
@@ -82,7 +80,6 @@
   .hitem span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   [data-auth]:disabled { opacity: .6; cursor: wait; }
-  /* Layout fixes */
   #app { padding-top: env(safe-area-inset-top); }
   #sidebar { transition: transform .3s cubic-bezier(.22,.8,.3,1), width .3s ease; }
   @media (min-width: 1024px) { #sidebar.sb-collapsed { width: 0; border-right-width: 0; } }
@@ -96,7 +93,6 @@
   .streaming-cursor::after { content: '▋'; margin-left: 2px; animation: blink 0.8s infinite; color: #22d3ee; }
   .voice-listening { animation: pulseMic 1.5s infinite; color: #34d399 !important; background: rgba(52,211,153,.15) !important; }
   @keyframes pulseMic { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,.4); } 70% { box-shadow: 0 0 0 8px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
-  /* iOS zooms into inputs below 16px */
   @media (max-width: 1023px) { .inp, #promptInput, #guideInput { font-size: 16px !important; } }
 </style>
 </head>
@@ -169,7 +165,6 @@
     </div>
   </header>
 
-  <!-- Mobile top tabs (shown only below lg) -->
   <nav id="mobileTabs" class="lg:hidden shrink-0 flex gap-1 p-1.5 border-b border-white/5 bg-ink-900">
     <button data-mtab="chat" type="button"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> Chat</button>
     <button data-mtab="code" type="button"><i data-lucide="code-2" class="w-3.5 h-3.5"></i> Code</button>
@@ -179,7 +174,6 @@
   <div class="flex-1 min-h-0 flex relative">
     <div id="drawerOverlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"></div>
 
-    <!-- Sidebar -->
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-[86vw] max-w-[340px] lg:w-72 lg:max-w-none shrink-0 -translate-x-full lg:translate-x-0 bg-ink-900 border-r border-white/5 flex flex-col overflow-hidden">
       <div class="h-14 lg:hidden shrink-0 flex items-center justify-between px-4 border-b border-white/5">
         <span class="font-semibold text-sm">SAIM Studio Menu</span>
@@ -211,10 +205,8 @@
       <div id="modelList" class="flex-1 min-h-0 overflow-y-auto px-3 pb-3 space-y-1.5"></div>
       </aside>
 
-    <!-- Chat -->
     <section id="chatPane" class="flex flex-col flex-1 min-w-0 min-h-0 lg:flex-none lg:w-[42%] lg:max-w-[560px] border-r border-white/5 bg-ink-950">
       
-      <!-- Live Supervisor & Failover Timeline Ribbon -->
       <div id="handoffStrip" class="hidden shrink-0 px-3.5 py-1.5 bg-purple-950/40 border-b border-purple-500/20 text-[11px] flex items-center justify-between text-purple-200">
         <div class="flex items-center gap-1.5 truncate">
           <i data-lucide="git-merge" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
@@ -250,7 +242,6 @@
       </div>
     </section>
 
-    <!-- Code / Preview -->
     <section id="codePane" class="hidden lg:flex flex-col flex-1 min-w-0 min-h-0 bg-ink-900">
       <div class="shrink-0 h-12 flex items-center gap-2 px-2 sm:px-3 border-b border-white/5 bg-ink-850 overflow-x-auto noscroll">
         <div class="hidden lg:flex shrink-0 p-1 rounded-xl bg-ink-800 text-xs">
@@ -269,7 +260,6 @@
           <button id="btnFix" class="ml-1 shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-pink-500/15 text-pink-200 hover:bg-pink-500/25"><i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i> Auto Fix</button>
         </div>
       </div>
-      <!-- IDE action bar -->
       <div id="ideBar" class="shrink-0 h-10 flex items-center gap-1.5 px-2 sm:px-3 border-b border-white/5 bg-ink-900 overflow-x-auto noscroll">
         <button data-ide-toggle="explorer" class="ide-btn" title="File Explorer"><i data-lucide="folder-tree" class="w-3.5 h-3.5"></i> Files</button>
         <button data-ide-toggle="terminal" class="ide-btn" title="Terminal"><i data-lucide="terminal" class="w-3.5 h-3.5"></i> Terminal</button>
@@ -294,7 +284,6 @@
       <div class="flex-1 min-h-0 relative">
         <div id="codeView" class="absolute inset-0 flex flex-col">
          <div class="flex flex-1 min-h-0">
-          <!-- File Explorer (VFS) -->
           <aside id="fileExplorer" class="hidden lg:flex flex-col shrink-0 w-48 border-r border-white/5 bg-ink-950/80 backdrop-blur">
             <div class="flex items-center justify-between px-3 h-9 border-b border-white/5">
               <span class="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">Explorer</span>
@@ -308,7 +297,6 @@
           <div id="lineNums" class="shrink-0 w-11 py-3 text-right pr-2 text-[12px] leading-6 font-mono text-zinc-600 bg-ink-950/70 select-none overflow-hidden"></div>
           <textarea id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off" class="flex-1 min-w-0 bg-ink-950 text-zinc-200 font-mono text-[12.5px] leading-6 p-3 focus:outline-none"></textarea>
          </div>
-         <!-- Terminal panel -->
          <div id="terminalPanel" class="hidden shrink-0 h-48 flex-col border-t border-purple-500/30 bg-black/70 backdrop-blur">
            <div class="flex items-center justify-between px-3 h-8 border-b border-white/5">
              <span class="text-[10px] font-semibold tracking-widest text-cyan-400 uppercase flex items-center gap-1.5"><i data-lucide="terminal" class="w-3 h-3"></i> Terminal <span id="termStatus" class="text-zinc-500 normal-case tracking-normal">(local shell)</span></span>
@@ -449,12 +437,10 @@
         <div class="step-icon w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="palette" class="w-3.5 h-3.5"></i></div>
         <div><div class="text-xs font-semibold text-zinc-200">1. UI/UX &amp; Structure (Claude)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">HTML layout, Tailwind CSS, components. Falls back to Gemini.</div></div>
       </div>
-
       <div id="step-2" class="flex items-start gap-3 opacity-40 transition-opacity duration-300">
         <div class="step-icon w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="file-json" class="w-3.5 h-3.5"></i></div>
         <div><div class="text-xs font-semibold text-zinc-200">2. Logic &amp; Interactivity (Gemini)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Full JavaScript logic and event wiring.</div></div>
       </div>
-
       <div id="step-3" class="flex items-start gap-3 opacity-40 transition-opacity duration-300">
         <div class="step-icon w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="bug" class="w-3.5 h-3.5"></i></div>
         <div><div class="text-xs font-semibold text-zinc-200">3. Verification (DeepSeek)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Syntax and logic check. Falls back to OpenRouter, then Gemini.</div></div>
@@ -484,19 +470,14 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   };
 
-  // ---------- Security helpers: sanitising, masking, redaction ----------
   const sstore = {
     get(k, d) { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
     set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   };
-  // API key: strip whitespace/control chars, accept only characters real provider keys use.
   const cleanKey = raw => { const k = String(raw == null ? '' : raw).replace(/[\s\u0000-\u001f\u007f]/g, ''); return /^[\w.~+\/=:\-]{8,400}$/.test(k) ? k : ''; };
-  // Show only the last 4 characters of a key in the UI.
   const maskKey = k => { k = String(k || ''); return k.length > 8 ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + k.slice(-4) : '\u2022\u2022\u2022\u2022'; };
-  // Free text: drop control characters (keeps \n and \t) and cap the length.
   const sanitizeText = (s, max) => String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').slice(0, max || 20000);
   const safeUrl = u => { try { const x = new URL(String(u)); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href.replace(/\/+$/, '') : ''; } catch (e) { return ''; } };
-  // Never let key-looking strings reach the screen (provider error bodies can echo them).
   const redact = s => String(s == null ? '' : s).replace(/AIza[\w-]{20,}/g, 'AIza\u2026').replace(/sk-[\w-]{12,}/g, 'sk-\u2026').replace(/gsk_[\w-]{12,}/g, 'gsk_\u2026').replace(/pplx-[\w-]{12,}/g, 'pplx-\u2026');
 
   let toastTimer;
@@ -509,18 +490,10 @@
   }
 
   const ErrorKind = {
-    RATE_LIMIT: 'RATE_LIMIT',
-    QUOTA_EXHAUSTED: 'QUOTA_EXHAUSTED',
-    CONTEXT_TOO_LONG: 'CONTEXT_TOO_LONG',
-    OUTPUT_TRUNCATED: 'OUTPUT_TRUNCATED',
-    AUTH: 'AUTH',
-    CORS: 'CORS',
-    NETWORK: 'NETWORK',
-    TIMEOUT: 'TIMEOUT',
-    BAD_OUTPUT: 'BAD_OUTPUT',
-    UNKNOWN: 'UNKNOWN'
+    RATE_LIMIT: 'RATE_LIMIT', QUOTA_EXHAUSTED: 'QUOTA_EXHAUSTED', CONTEXT_TOO_LONG: 'CONTEXT_TOO_LONG',
+    OUTPUT_TRUNCATED: 'OUTPUT_TRUNCATED', AUTH: 'AUTH', CORS: 'CORS', NETWORK: 'NETWORK',
+    TIMEOUT: 'TIMEOUT', BAD_OUTPUT: 'BAD_OUTPUT', UNKNOWN: 'UNKNOWN'
   };
-
   function classifyError(err, status) {
     if (err && err.name === 'AbortError') return ErrorKind.TIMEOUT;
     const msg = (err?.message || '').toLowerCase();
@@ -580,7 +553,6 @@ Always reply in the language the user writes in (Bengali or English). Never answ
   const VOICE_RULES = `
 VOICE MODE: the user is talking by voice. Keep plain-text answers short and conversational (1-3 sentences), with no markdown, lists or emojis. If code was requested, give the code block and then one short spoken sentence summarising what you did.`;
 
-  // Dedicated Gatekeeper Prompt for Owner Trial Mode
   const OWNER_TRIAL_PROMPT = `You are "SAIM AI AGENT", the customer support and AI specialist of SAIM Studio.
 Greet the user warmly and ask how you can help.
 RULES FOR TRIAL MODE:
@@ -601,7 +573,7 @@ Assist the user with:
     models: [],
     priority: store.get('sain.priority', []),
     active: store.get('sain.active', 'gemini/gemini-flash-latest'),
-    keys: {},   // personal keys: memory only. The source of truth is Firestore users/{uid}/settings/apiKeys
+    keys: {},
     githubLogin: '', user: null, customOn: !!store.get('sain.customOn', false),
     customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
     githubToken: sstore.get('sain.githubToken', ''),
@@ -618,20 +590,15 @@ Assist the user with:
   let resolveOwner; const ownerReady = new Promise(r => { resolveOwner = r; });
   let resolveAuth; const authReady = new Promise(r => { resolveAuth = r; });
   let keysReady = Promise.resolve();
-  // Resolves once Firebase told us who is signed in and (if signed in) their saved keys were restored.
   const waitForAccount = () => Promise.race([authReady.then(() => keysReady), new Promise(r => setTimeout(r, 6000))]);
 
   // ---------- Admin / default system keys ----------
-  // Fetched from Firestore config/system_keys. They live only in this closure: never on `state`, never in the DOM,
-  // never in localStorage and never logged. NOTE: anything a browser can use, a determined visitor can extract with
-  // devtools. For real secrecy move these calls behind a serverless proxy (see the Firestore rules comment below).
   const ADMIN = { keys: {}, geminiModel: 'gemini-flash-latest', fsDoc: {}, legacy: {} };
   const TRIAL_ORDER = ['gemini', 'deepseek', 'openai', 'openrouter', 'anthropic'];
   const TRIAL_NAMES = { gemini: 'Gemini Flash', deepseek: 'DeepSeek Chat', openai: 'GPT-4o mini', openrouter: 'OpenRouter Auto', anthropic: 'Claude Haiku' };
   const TRIAL_MODELS = { deepseek: 'deepseek-chat', openai: 'gpt-4o-mini', openrouter: 'openrouter/auto', anthropic: 'claude-haiku-5-5' };
   const TRIAL_MAX_TOKENS = 900, TRIAL_MAX_HISTORY = 6, TRIAL_MAX_CODE_LINES = 14;
   const TRIAL_LIMIT_MSG = 'To unlock unlimited project generation, please add your personal API Key in Settings.';
-  // Free tier allows chat, explanations and short snippets; full apps / projects need a personal key.
   const HEAVY_RE = [
     /\b(build|create|make|generate|develop|code|write|design|scaffold)\b[^.?!\n]{0,60}\b(full|complete|entire|whole|multi[- ]?(page|file)|production|fully[- ]functional)\b/i,
     /\b(build|create|make|generate|develop|code|write|design|scaffold)\b[^.?!\n]{0,60}\b(web ?app|web ?site|website|application|app|dashboard|landing page|game|project|platform|portfolio|e-?commerce|clone|saas|crm)\b/i,
@@ -656,8 +623,6 @@ Assist the user with:
   }
   const hasPersonalCloudKey = () => PROVIDER_ORDER.some(p => p !== 'custom' && hasKeyFor(p));
   const modelById = id => state.models.find(m => m.id === id);
-
-  // Checks if the USER has provided any of their own keys (BYOK)
   const isUserByokActive = () => !!state.customOn || PROVIDER_ORDER.some(p => p !== 'custom' && typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
   const hasKeyFor = p => p === 'custom' ? !!state.customOn : (typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
 
@@ -706,10 +671,11 @@ Assist the user with:
     })();
   })();
 
-  /* ---------- Screens ---------- */
+  /* ---------- Screens (FIXED: login gate) ---------- */
   function showApp() {
-    $('#landing').classList.add('hidden');   // guests may chat on the free tier; sign-in is optional
-    
+    // FIX #3: hard login gate — workspace is only reachable after sign-in.
+    if (!state.user) { openModal('#modalLogin'); return; }
+    $('#landing').classList.add('hidden');
     const app = $('#app'); app.classList.remove('hidden'); app.classList.add('flex');
     setPane(state.pane); icons();
   }
@@ -755,14 +721,72 @@ Assist the user with:
     if (isDesktop()) { state.collapsed = false; sidebar.classList.remove('sb-collapsed'); } else openDrawer();
   });
 
-  /* ---------- Models ---------- */
+  /* ---------- Models (FIXED: full new SEED list) ---------- */
   const SEED = [
-    ['gemini', 'gemini-flash-latest', 'Gemini Flash (latest)'], ['gemini', 'gemini-pro-latest', 'Gemini Pro (latest)'],
-    ['anthropic', 'claude-sonnet-5-5', 'Claude Sonnet 5.5'], ['anthropic', 'claude-haiku-5-5', 'Claude Haiku 5.5'],
-    ['deepseek', 'deepseek-chat', 'DeepSeek V3'], ['deepseek', 'deepseek-reasoner', 'DeepSeek R1'],
-    ['groq', 'llama-3.3-70b-versatile', 'Llama 3.3 70B (Groq)'], ['mistral', 'mistral-large-latest', 'Mistral Large'],
-    ['together', 'meta-llama/Llama-3.3-70B-Instruct-Turbo', 'Llama 3.3 70B (Together)'], ['perplexity', 'sonar', 'Perplexity Sonar'], ['perplexity', 'sonar-pro', 'Perplexity Sonar Pro'], ['perplexity', 'sonar-reasoning-pro', 'Perplexity Sonar Reasoning Pro'],
-    ['custom', 'llama3', 'Custom / Local Model']
+    // --- OpenAI Models ---
+    ['openai', 'gpt-6.1-sol', 'OpenAI: GPT-6.1 Sol'],
+    ['openai', 'gpt-6-astra', 'OpenAI: GPT-6 Astra'],
+    ['openai', 'gpt-6-luna', 'OpenAI: GPT-6 Luna'],
+    ['openai', 'gpt-5.5', 'OpenAI: GPT-5.5'],
+    ['openai', 'gpt-4o', 'OpenAI: GPT-4o'],
+    ['openai', 'gpt-4o-mini', 'OpenAI: GPT-4o Mini'],
+
+    // --- Anthropic Claude Series ---
+    ['anthropic', 'claude-opus-5-5', 'Anthropic: Claude Opus 5.5'],
+    ['anthropic', 'claude-sonnet-5-5', 'Anthropic: Claude Sonnet 5.5'],
+    ['anthropic', 'claude-haiku-5-5', 'Anthropic: Claude Haiku 5.5'],
+    ['anthropic', 'claude-sonnet-4-6', 'Anthropic: Claude Sonnet 4.6'],
+
+    // --- Google Gemini Series ---
+    ['gemini', 'gemini-4-argon', 'Google: Gemini 4 Argon'],
+    ['gemini', 'gemini-3.1-pro', 'Google: Gemini 3.1 Pro'],
+    ['gemini', 'gemini-3.8-flash', 'Google: Gemini 3.8 Flash'],
+    ['gemini', 'gemini-2.5-flash', 'Google: Gemini 2.5 Flash'],
+    ['gemini', 'gemini-flash-latest', 'Google: Gemini Flash (Latest)'],
+
+    // --- DeepSeek Series ---
+    ['deepseek', 'deepseek-v4.1-flash', 'DeepSeek: V4.1 Flash'],
+    ['deepseek', 'deepseek-chat', 'DeepSeek: V3 / V4 Chat'],
+    ['deepseek', 'deepseek-reasoner', 'DeepSeek: R1 Reasoner'],
+
+    // --- Meta Llama Series ---
+    ['groq', 'meta-llama/llama-3.3-70b-instruct', 'Meta: Llama 3.3 70B Instruct'],
+    ['groq', 'meta-llama/llama-3.1-8b-instruct', 'Meta: Llama 3.1 8B Instruct'],
+    ['together', 'meta-llama/llama-3.3-70b-instruct-turbo', 'Meta: Llama 3.3 70B Turbo'],
+
+    // --- NVIDIA Frontier Models ---
+    ['openrouter', 'nvidia/nemotron-3-ultra-550b-a55b:free', 'NVIDIA: Nemotron 3 Ultra (Free)'],
+    ['openrouter', 'nvidia/nemotron-3.5-super-vl:free', 'NVIDIA: Nemotron 3.5 Super VL (Free)'],
+
+    // --- xAI Grok Series ---
+    ['groq', 'grok-4.7', 'xAI: Grok 4.7'],
+    ['groq', 'grok-4.1', 'xAI: Grok 4.1 Fast'],
+
+    // --- Mistral AI Series ---
+    ['mistral', 'mistral-large-4', 'Mistral: Large 4'],
+    ['mistral', 'codestral-latest', 'Mistral: Codestral'],
+    ['mistral', 'mistral-medium-latest', 'Mistral: Medium'],
+
+    // --- Alibaba Qwen Series ---
+    ['openrouter', 'qwen/qwen3-coder:free', 'Alibaba: Qwen 3 Coder (Free)'],
+    ['openrouter', 'qwen/qwen-2.5-72b-instruct', 'Alibaba: Qwen 2.5 72B'],
+
+    // --- Z.ai & MiniMax ---
+    ['openrouter', 'z-ai/glm-5.3-flash', 'Z.ai: GLM 5.3 Flash'],
+    ['openrouter', 'minimax/m3.1-flash:free', 'MiniMax: M3.1 Flash (Free)'],
+
+    // --- Xiaomi ---
+    ['openrouter', 'xiaomi/mimo-v2.6-flash', 'Xiaomi: MiMo-V2.6 Flash'],
+
+    // --- Perplexity Search Models ---
+    ['perplexity', 'sonar-pro', 'Perplexity: Sonar Pro (Search)'],
+    ['perplexity', 'sonar-reasoning-pro', 'Perplexity: Sonar Reasoning Pro'],
+    ['perplexity', 'sonar', 'Perplexity: Sonar Standard'],
+
+    // --- OpenRouter & Local ---
+    ['openrouter', 'openrouter/free', 'OpenRouter: Auto-Router (Free Pool)'],
+    ['openrouter', 'openrouter/auto', 'OpenRouter: Best Community Auto-Route'],
+    ['custom', 'llama3', 'Local: Ollama / Llama 3']
   ].map(([provider, id, name]) => ({ provider, id: provider + '/' + id, name }));
 
   function setCatalog(list) {
@@ -796,7 +820,6 @@ Assist the user with:
     if (p === 'openrouter') return /:free$/.test(id);
     return false;
   }
-  // Auto order: newest first; for Gemini all free (flash) models come before Pro models
   function sortKey(p, id) {
     const free = isFreeModel({ provider: p, id: p + '/' + id }) ? 0 : 1;
     const lite = /lite|mini|nano|small|8b|haiku/i.test(id) ? 1 : 0;
@@ -943,7 +966,6 @@ Assist the user with:
     persistModels(); renderModels(); updateActiveLabel();
   }
 
-  /* ---------- Proxy URL Helper ---------- */
   function applyProxy(url) {
     const p = (state.settings.corsProxy || '').trim();
     if (!p) return url;
@@ -1157,11 +1179,11 @@ Assist the user with:
   /* ---------- Unified Stream Runner (Owner Trial vs User BYOK) ---------- */
   async function runUnifiedStream(rawMessages, opts) {
     opts = opts || {};
-    await waitForAccount();   // make sure saved personal keys were restored before choosing free vs personal mode
+    await waitForAccount();
     const messages = cleanMessages(rawMessages);
     state.stopFlag = false; state.lastFinish = '';
 
-    // 1. FREE TIER: no personal key -> admin fallback keys with hard limits (short chat, small snippets only)
+    // 1. FREE TIER: no personal key -> admin fallback keys with hard limits
     if (!isUserByokActive()) {
       await Promise.race([ownerReady, new Promise(r => setTimeout(r, 6000))]);
       const lastUser = messages.slice().reverse().find(m => m.role === 'user');
@@ -1207,7 +1229,6 @@ Assist the user with:
         } catch (err) {
           clearTimeout(timer);
           if (state.stopFlag) { $('#handoffStrip').classList.add('hidden'); throw new Error('Generation cancelled'); }
-          // try the next admin provider
         }
       }
       $('#handoffStrip').classList.add('hidden');
@@ -1221,7 +1242,7 @@ Assist the user with:
       '\n\n--- CODING INSTRUCTIONS (for building a NEW app or full rewrite; for edits to existing code use the patch blocks from rule 3) ---\n' + agent.prompt +
       (extra ? '\n\nCustom Instructions:\n' + extra : ''));
 
-    const manual = !state.autoMode;            // manual = only the selected model, no switching
+    const manual = !state.autoMode;
     const seen = new Set();
     const ids = (manual ? [state.active] : state.priority.concat(autoChainIds()))
       .filter(id => id && !seen.has(id) && (seen.add(id), true) && (manual || !deadSet.has(id)));
@@ -1229,7 +1250,7 @@ Assist the user with:
     const failures = [], dead = [], badProv = new Set();
     const maxTries = manual ? 1 : 10;
     const idleSec = Math.max(10, Number(state.settings.timeoutSec) || 60);
-    const idleMs = (manual ? idleSec : Math.min(idleSec, 40)) * 1000;   // time without any new output
+    const idleMs = (manual ? idleSec : Math.min(idleSec, 40)) * 1000;
     let tried = 0;
 
     $('#handoffStrip').classList.remove('hidden');
@@ -1285,7 +1306,6 @@ Assist the user with:
   /* ---------- Chat UI ---------- */
   const chatScroll = $('#chatScroll'), promptInput = $('#promptInput');
   const CODE_RE = /```(?:html)?[ \t]*\r?\n([\s\S]*?)```/i;
-  // closed block first; if the output was cut off (no closing fence) take the rest when it looks like HTML
   function extractHtml(t) {
     const looksHtml = c => /<(!doctype|html|body|head|div|main|section|script|style)\b/i.test(c || '');
     const m = String(t || '').match(CODE_RE);
@@ -1337,7 +1357,6 @@ Assist the user with:
     if (m && m[1]) { setCode(m[1].trim(), true); toast('Live preview updated'); if (!isDesktop()) setPane('preview'); return { applied: true, mode: 'full' }; }
     return { applied: false };
   }
-  // History sent to the model: old code replies are shortened, the current editor code is attached to the last message
   function messagesForModel() {
     if (!isUserByokActive()) return state.messages;
     const msgs = state.messages.map(m => Object.assign({}, m));
@@ -1421,7 +1440,7 @@ Assist the user with:
         }
       });
       bubble.classList.remove('streaming-cursor');
-      if (res.isTrial) contentEl.innerHTML = fmt(res.text);   // shows the limit message instead of any streamed code
+      if (res.isTrial) contentEl.innerHTML = fmt(res.text);
       const meta = res.isTrial ? 'Free tier · ' + res.entry.name : ((AGENTS[state.agent] || AGENTS.coder).name + ' · ' + res.entry.name);
       const metaDiv = document.createElement('div');
       metaDiv.className = 'text-[10px] text-zinc-500 font-mono pt-1.5';
@@ -1431,8 +1450,6 @@ Assist the user with:
       state.messages.push({ role: 'assistant', content: res.text, meta });
       saveCurrentChat();
 
-      // Put code / patches into the editor and preview BEFORE anything else (voice must never block this)
-      // The free tier never writes into the editor: it only gives chat answers and short snippets.
       try { if (!res.isTrial) { const ap = await applyAiOutput(res.text); if (ap && ap.applied) saveAppSnapshot(text, state.code); } } catch (e) { toast('Could not apply code: ' + e.message, 4000); }
       if (state.lastFinish === 'MAX_TOKENS') toast('The reply was cut off by the output limit', 4000);
       voiceAfterReply(res.text);
@@ -1453,7 +1470,6 @@ Assist the user with:
 
   /* ---------- Sessions ---------- */
   function persistChats() { store.set('sain.chats', state.chats.slice(0, 20)); }
-  // Generated web-app history lives in this browser only (no Firestore reads/writes).
   function saveAppSnapshot(title, code) {
     if (!code || !String(code).trim()) return;
     const list = store.get('sain.apps', []);
@@ -1657,7 +1673,6 @@ Assist the user with:
       } catch (e) { acc.textContent = 'Not connected'; btn.textContent = 'Sign in with GitHub'; }
     }
   }
- /* ---------- GitHub Push (Multi-file support) ---------- */
   bind('#btnPushGithub', 'click', async () => {
     const btn = $('#btnPushGithub');
     if (!state.githubToken) { if (await signIn('github')) ghRefresh(); return; }
@@ -1682,7 +1697,6 @@ Assist the user with:
         if (!r.ok) throw new Error((await r.json()).message || 'Could not create repository');
       } else if (!r.ok) throw new Error('GitHub error ' + r.status);
       
-      // VFS থেকে সব ফাইল গিটহাবে পুশ করার লজিক
       const files = vfs.list();
       for (const fileName of files) {
         const filePath = fileName.split('/').map(encodeURIComponent).join('/');
@@ -1750,7 +1764,7 @@ Assist the user with:
     const p = providerOf(id); curProvider = id;
     $('#inputTitle').textContent = p.name; $('#inputSubtitle').textContent = p.desc;
     const inp = $('#providerKeyInput');
-    inp.value = '';   // the saved key is never put back into the field; only its last 4 characters are shown
+    inp.value = '';
     inp.placeholder = state.keys[id] ? maskKey(state.keys[id]) + '  (saved \u2014 paste a new key to replace)' : p.hint;
     inp.type = 'password';
     $('#customEndpointBox').classList.toggle('hidden', id !== 'custom');
@@ -1866,39 +1880,7 @@ Assist the user with:
   bind('#guideSendBtn', 'click', sendGuide);
   bind(guideInput, 'keydown', e => { if (e.key === 'Enter' && !e.shiftKey && isDesktop()) { e.preventDefault(); sendGuide(); } });
 
-  /* ---------- Firebase (Auth + Firestore) ----------
-     DATA MODEL
-       config/system_keys                  admin fallback keys  { gemini, anthropic, openai, deepseek, openrouter, geminiModel? }
-       users/{uid}/settings/apiKeys        the signed-in user's own keys { gemini, anthropic, ..., updatedAt }
-       Realtime DB users/{uid}/workspace   optional editor-code sync (legacy; keep or drop)
-     Chats and generated-app history stay in localStorage on purpose (no Firestore read/write cost).
-
-     FIRESTORE SECURITY RULES (paste into Firebase console > Firestore > Rules, replace YOUR_ADMIN_UID):
-       rules_version = '2';
-       service cloud.firestore {
-         match /databases/{database}/documents {
-           // Only the owner can edit the fallback keys.
-           match /config/system_keys {
-             allow read: if true;            // required so free-tier visitors can chat. See the note below.
-             allow write: if request.auth != null && request.auth.uid == 'YOUR_ADMIN_UID';
-           }
-           // Each user can read/write ONLY their own keys, and only known string fields.
-           match /users/{userId}/settings/apiKeys {
-             allow read:   if request.auth != null && request.auth.uid == userId;
-             allow create, update: if request.auth != null && request.auth.uid == userId
-               && request.resource.data.keys().hasOnly(['gemini','anthropic','openai','deepseek','openrouter',
-                    'groq','mistral','perplexity','together','custom','updatedAt'])
-               && request.resource.data.keys().size() < 14;
-             allow delete: if request.auth != null && request.auth.uid == userId;
-           }
-           match /{document=**} { allow read, write: if false; }
-         }
-       }
-     NOTE: a key readable by the browser can be copied by a visitor. To truly hide the admin keys, set
-     `allow read: if false` and call the AI providers from a Cloud Function that holds them; at minimum restrict the
-     Gemini key by HTTP referrer and set provider spend limits. Firestore encrypts data at rest and the rules above
-     isolate each user's keys, but the keys are still plain text inside the user's own signed-in session. */
-  // Paste your Firebase web config below.
+  /* ---------- Firebase (Auth + Firestore) ---------- */
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyA2tXddGxNdcooTlg9JsYNUwzpxxnobE0A",
     authDomain: "saimaiagent.firebaseapp.com",
@@ -1914,26 +1896,62 @@ Assist the user with:
   let fbInit = null;
   const loadScript = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
 
-  // Admin fallback keys: Firestore config/system_keys (legacy fallback: RTDB sain_workspace/admin_config.geminiKey)
-  // ---------- Admin / default system keys (Fixed for Realtime DB) ----------
+  // ---------- Admin / default system keys (FIXED: Firestore first, RTDB fallback) ----------
   function watchOwnerConfig() {
-    if (fb.cfgRef) { try { fb.cfgRef.off('value'); } catch (e) {} fb.cfgRef = null; }
-    if (!fb.db) { resolveOwner(); return; }
-    
-    // সরাসরি রিয়েলটাইম ডেটাবেসের config/system_keys থেকে কি রিড করবে
-    fb.cfgRef = fb.db.ref('config/system_keys');
-    fb.cfgRef.on('value', snap => {
-      const v = snap.val() || {};
-      ADMIN.keys = {
-        gemini: cleanKey(v.gemini || ''),
-        openai: cleanKey(v.openai || ''),
-        deepseek: cleanKey(v.deepseek || ''),
-        anthropic: cleanKey(v.anthropic || '')
+    if (fb.cfgRef) { try { if (typeof fb.cfgRef.off === 'function') fb.cfgRef.off('value'); else if (fb.cfgRef.unsubscribe) fb.cfgRef.unsubscribe(); } catch (e) {} fb.cfgRef = null; }
+    let done = false;
+    const finish = () => { if (!done) { done = true; rebuildAdmin(); resolveOwner(); } };
+
+    const apply = (v) => {
+      v = v || {};
+      ADMIN.fsDoc = {
+        gemini:     cleanKey(v.gemini || v.geminiKey || ''),
+        anthropic:  cleanKey(v.anthropic || v.claude || ''),
+        openai:     cleanKey(v.openai || ''),
+        deepseek:   cleanKey(v.deepseek || ''),
+        openrouter: cleanKey(v.openrouter || ''),
+        geminiModel: typeof v.geminiModel === 'string' ? v.geminiModel : '',
+        model:       typeof v.model === 'string' ? v.model : ''
       };
-      if (v.geminiModel) ADMIN.geminiModel = v.geminiModel;
       rebuildAdmin();
-      resolveOwner();
-    }, () => resolveOwner());
+    };
+
+    // 1) Firestore: config/system_keys (primary source of truth)
+    if (fb.fs) {
+      try {
+        fb.cfgRef = fb.fs.collection('config').doc('system_keys').onSnapshot(
+          snap => { apply(snap.exists ? snap.data() : {}); finish(); },
+          () => finish()
+        );
+      } catch (e) { finish(); }
+    }
+
+    // 2) Realtime Database: config/system_keys (fallback)
+    if (fb.db) {
+      try {
+        const rtdbRef = fb.db.ref('config/system_keys');
+        rtdbRef.on('value', snap => {
+          const v = snap.val();
+          if (v && typeof v === 'object') {
+            const merged = Object.assign({}, ADMIN.fsDoc, {
+              gemini:     ADMIN.fsDoc.gemini     || cleanKey(v.gemini || ''),
+              anthropic:  ADMIN.fsDoc.anthropic  || cleanKey(v.anthropic || ''),
+              openai:     ADMIN.fsDoc.openai     || cleanKey(v.openai || ''),
+              deepseek:   ADMIN.fsDoc.deepseek   || cleanKey(v.deepseek || ''),
+              openrouter: ADMIN.fsDoc.openrouter || cleanKey(v.openrouter || ''),
+              geminiModel: ADMIN.fsDoc.geminiModel || (typeof v.geminiModel === 'string' ? v.geminiModel : '')
+            });
+            apply(merged);
+          }
+          finish();
+        }, () => finish());
+        const origRef = fb.cfgRef;
+        fb.cfgRef = { off: () => { try { rtdbRef.off('value'); } catch (e) {} if (origRef && origRef.unsubscribe) try { origRef.unsubscribe(); } catch (e) {} } };
+      } catch (e) { /* RTDB optional */ }
+    }
+
+    // Safety: if neither store answered, don't hang forever.
+    setTimeout(finish, 5000);
   }
 
   async function initFirebase() {
@@ -1945,7 +1963,7 @@ Assist the user with:
           loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-auth-compat.js'),
           loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-firestore-compat.js')
         ]);
-        await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-database-compat.js').catch(() => {});   // optional
+        await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-database-compat.js').catch(() => {});
       }
       const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
       fb.auth = firebase.auth(app);
@@ -1956,7 +1974,6 @@ Assist the user with:
     } catch (e) { resolveOwner(); resolveAuth(); }
   }
 
-  // Personal keys: users/{uid}/settings/apiKeys. Live listener = keys come back after logout/login and on other devices.
   const userKeysRef = uid => fb.fs.collection('users').doc(uid).collection('settings').doc('apiKeys');
   async function persistKey(p, val) {
     if (!state.user || !fb.fs) throw new Error('Sign in to sync keys to your account');
@@ -1973,7 +1990,6 @@ Assist the user with:
       PROVIDER_ORDER.forEach(p => { const k = typeof remote[p] === 'string' ? cleanKey(remote[p]) : ''; if (k) next[p] = k; });
       if (first) {
         first = false;
-        // One-time migration of keys an older version kept in localStorage.
         const legacy = store.get('sain.keys', null), mig = {};
         if (legacy && typeof legacy === 'object') PROVIDER_ORDER.forEach(p => { const k = typeof legacy[p] === 'string' ? cleanKey(legacy[p]) : ''; if (k && !next[p]) { next[p] = k; mig[p] = k; } });
         const wipe = () => { try { localStorage.removeItem('sain.keys'); } catch (e) {} };
@@ -1996,8 +2012,12 @@ Assist the user with:
     const wasIn = !!state.user;
     state.user = user || null;
     renderAccount(user);
+    // FIX #6: close login modal + auto-enter app if signed in and on landing
+    if (user) {
+      closeModal($('#modalLogin'));
+      if (!$('#landing').classList.contains('hidden')) showApp();
+    }
     if (!user && wasIn) {
-      // Signed out: wipe every personal secret from memory so the next person on this device sees none of them.
       state.keys = {}; state.githubToken = ''; state.githubLogin = '';
       sstore.set('sain.githubToken', '');
       if (!$('#app').classList.contains('hidden')) showLanding();
@@ -2068,9 +2088,10 @@ Assist the user with:
     }
     icons();
   }
-  delegate('[data-auth]', 'click', (e, t) => { const a = t.dataset.auth; if (a === 'signout') signOutUser(); else { const all = $$('[data-auth]'); all.forEach(b => b.disabled = true); signIn(a).then(r => { if (r) { closeModal($('#modalLogin')); if (!$('#landing').classList.contains('hidden')) showApp(); } }).finally(() => all.forEach(b => b.disabled = false)); } });
+  // FIX #5: always showApp() after successful login (not only if landing visible)
+  delegate('[data-auth]', 'click', (e, t) => { const a = t.dataset.auth; if (a === 'signout') signOutUser(); else { const all = $$('[data-auth]'); all.forEach(b => b.disabled = true); signIn(a).then(r => { if (r) { closeModal($('#modalLogin')); showApp(); } }).finally(() => all.forEach(b => b.disabled = false)); } });
 
-  /* ---------- Voice (speech-to-text + spoken replies) ---------- */
+  /* ---------- Voice ---------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const voice = { rec: null, on: false, convo: false, dict: false, timer: null, idle: 0, speak: !!store.get('sain.voiceSpeak', false), lang: store.get('sain.voiceLang', 'bn-BD'), speaking: false, utt: null };
   function updateVoiceUI() {
@@ -2091,7 +2112,6 @@ Assist the user with:
     try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
     updateVoiceUI();
   }
-  // Keeps listening until the user switches it off. In conversation mode a pause of ~1.8s sends the sentence to the AI.
   function startListening() {
     if (!SR) { toast('Voice input is not supported in this browser'); voice.convo = false; voice.dict = false; updateVoiceUI(); return; }
     stopListening(); stopSpeaking();
@@ -2145,7 +2165,6 @@ Assist the user with:
     if (cur.trim()) out.push(cur.trim());
     return out;
   }
-  // Reads the reply aloud in short chunks (long single utterances get cut off by browsers)
   function speakText(text, done) {
     if (!('speechSynthesis' in window)) { if (done) done(); return; }
     let clean = speechClean(text);
@@ -2190,8 +2209,7 @@ Assist the user with:
   });
   updateVoiceUI();
 
-  /* ---------- Autonomous Multi-Agent Pipeline ----------
-     Gemini (plan) -> Claude (design) -> Gemini (JS logic) -> DeepSeek (audit + fix) -> Gemini (final QA + fix) */
+  /* ---------- Autonomous Multi-Agent Pipeline ---------- */
   const AutoAgentSystem = (function () {
     const STEP_COLORS = { 1: 'orange', 2: 'blue', 3: 'cyan' };
     const PATCH_FORMAT = 'Reply with ONLY patch blocks in exactly this format, one per fix:\n<<<<<<< SEARCH\n(exact existing text, short but specific)\n=======\n(fixed text)\n>>>>>>> REPLACE\nSEARCH must match the code character for character. Do NOT rewrite the whole file. If nothing needs fixing, reply exactly: NO_ISSUES';
@@ -2216,8 +2234,6 @@ Assist the user with:
       ids.sort((a, b) => cmpKey(sortKey(p, a), sortKey(p, b)));
       return ids[0] || fallback;
     }
-
-    // One non-streaming call; returns { text, truncated }
     async function fetchAgent(provider, model, systemPrompt, userPrompt, apiKey) {
       if (!apiKey) throw new Error('Missing API key for ' + provider);
       let url, body, headers;
@@ -2288,7 +2304,6 @@ Assist the user with:
       icons();
     }
 
-    // Applies a reviewer's answer: patch blocks (preferred), NO_ISSUES, or a complete rewritten file
     function applyReview(code, text) {
       const patches = []; let m; PATCH_RE.lastIndex = 0;
       while ((m = PATCH_RE.exec(text))) patches.push([m[1], m[2]]);
@@ -2301,16 +2316,15 @@ Assist the user with:
       if (full && full[1] && looksComplete(full[1]) && full[1].length > code.length * 0.6) return { code: full[1].trim(), note: 'File corrected' };
       return { code, note: 'No usable changes returned' };
     }
-    // ----- role based routing with fallbacks -----
     const CLOUD = PROVIDER_ORDER.filter(p => p !== 'custom');
     const PNAME = { gemini: 'Gemini', anthropic: 'Claude', openai: 'OpenAI', deepseek: 'DeepSeek', openrouter: 'OpenRouter' };
     const pname = p => PNAME[p] || (providerOf(p) ? providerOf(p).name : p);
     const DEFAULT_MODEL = { gemini: 'gemini-flash-latest', anthropic: 'claude-sonnet-5-5', openai: 'gpt-4o', deepseek: 'deepseek-chat', openrouter: 'openrouter/auto', groq: 'llama-3.3-70b-versatile', mistral: 'mistral-large-latest', together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', perplexity: 'sonar-pro' };
     const modelFor = p => ['gemini', 'anthropic', 'deepseek'].includes(p) ? pickModel(p, DEFAULT_MODEL[p]) : DEFAULT_MODEL[p];
     const ROLE = {
-      design: ['anthropic', 'gemini', 'openai', 'openrouter', 'deepseek'],   // Claude, falls back to Gemini
-      logic: ['gemini', 'openai', 'openrouter', 'anthropic', 'deepseek'],     // Gemini
-      verify: ['deepseek', 'openrouter', 'gemini']                             // DeepSeek -> OpenRouter -> Gemini self-check
+      design: ['anthropic', 'gemini', 'openai', 'openrouter', 'deepseek'],
+      logic: ['gemini', 'openai', 'openrouter', 'anthropic', 'deepseek'],
+      verify: ['deepseek', 'openrouter', 'gemini']
     };
     async function callRole(cands, anyFallback, system, prompt, onTry) {
       const order = Array.from(new Set(anyFallback ? cands.concat(CLOUD) : cands)).filter(p => hasKeyFor(p) && state.keys[p]);
@@ -2332,7 +2346,6 @@ Assist the user with:
     async function executePipeline(userPrompt) {
       if (state.busy) return toast('Please wait for the current task to finish');
       await waitForAccount();
-      // Project builder = heavy generation: only with the person's own keys.
       if (!hasPersonalCloudKey()) { limitReply(userPrompt); return; }
 
       state.busy = true;
@@ -2341,14 +2354,12 @@ Assist the user with:
       const notes = [];
       let current = 1;
       try {
-        // 1. UI/UX + structure: Claude (fallback Gemini / any available key)
         current = 1; setStepStatus(1, 'loading', 'Designing the UI...');
         const d = await callRole(ROLE.design, true, 'You are an elite UI/UX designer. Use HTML5 and Tailwind CSS via CDN. Build the complete, responsive page layout and components for the request. Give every interactive element a clear id. Do not write the JS logic, only the beautiful UI shell (you may add a minimal empty <script> at the end). Output ONLY one complete HTML file inside a ```html block.', userPrompt, p => setStepStatus(1, 'loading', pname(p) + ' is building the UI layout...'));
         const uiHTML = codeOf(d.text);
         if (d.truncated || !looksComplete(uiHTML)) throw new Error(pname(d.provider) + ' output was cut off');
         setStepStatus(1, 'done', 'UI by ' + pname(d.provider)); notes.push(pname(d.provider) + ' designed the UI');
 
-        // 2. Interactive logic: Gemini
         current = 2; setStepStatus(2, 'loading', 'Writing JavaScript logic...');
         const devPrompt = 'Original user request:\n' + userPrompt + '\n\nHere is the UI:\n```html\n' + uiHTML + '\n```\n\nKeep the design and add complete, working inline JavaScript so every button, form and feature in the request works.';
         const g = await callRole(ROLE.logic, true, 'You are a Senior Full-Stack Developer. You receive an HTML UI. Keep the design, add complete working inline JavaScript so every button and feature works. Output the complete combined HTML file inside one ```html block.', devPrompt, p => setStepStatus(2, 'loading', pname(p) + ' is wiring JavaScript logic...'));
@@ -2356,7 +2367,6 @@ Assist the user with:
         if (g.truncated || !looksComplete(code)) throw new Error(pname(g.provider) + ' output was cut off');
         setStepStatus(2, 'done', 'Logic by ' + pname(g.provider)); notes.push(pname(g.provider) + ' wrote the JavaScript logic');
 
-        // 3. Verification: DeepSeek -> OpenRouter -> Gemini self-check. A failure here skips the step instead of stopping the build.
         current = 3; setStepStatus(3, 'loading', 'Checking for bugs...');
         try {
           const r3 = await review('You are an elite Code Auditor. Review the HTML/CSS/JS for syntax errors, undefined variables or ids, broken event handlers, missing features from the request and layout bugs. ' + PATCH_FORMAT, code, userPrompt, p => setStepStatus(3, 'loading', pname(p) + ' is checking for bugs...'));
@@ -2389,10 +2399,14 @@ Assist the user with:
     return { execute: executePipeline };
   })();
 
-  /* ---------- Global Actions ---------- */
+  /* ---------- Global Actions (FIXED: launch gate) ---------- */
   delegate('[data-action]', 'click', (e, el) => {
     const a = el.dataset.action;
-    if (a === 'launch') showApp();
+    if (a === 'launch') {
+      // FIX #4: login gate — show modal if not signed in
+      if (state.user) showApp();
+      else openModal('#modalLogin');
+    }
     else if (a === 'home') showLanding();
     else if (a === 'keys') { closeModal($('#modalSettings')); openProviders(); }
     else if (a === 'settings') { openSettings(); closeDrawer(); }
@@ -2412,11 +2426,8 @@ Assist the user with:
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && document.activeElement === editor) { e.preventDefault(); redoCode(); }
   });
 
-
   /* =====================================================================
-     MODULE 1: Virtual File System (VFS) + IDE shell (Explorer, Terminal, Actions)
-     - index.html is the live document: it is always state.code (single source of truth)
-     - every other file lives only in the VFS and is persisted to localStorage
+     MODULE 1: Virtual File System (VFS) + IDE shell
      ===================================================================== */
   const MAIN_FILE = 'index.html';
   const vfs = {
@@ -2434,7 +2445,6 @@ Assist the user with:
     },
     persist() { const o = {}; for (const n in this.files) if (n !== MAIN_FILE) o[n] = this.files[n]; store.set('sain.vfs', o); },
 
-    // Create or overwrite a file. index.html goes through setCode so history/preview/Firebase keep working.
     updateFile(name, content, type, run) {
       name = String(name || '').trim(); if (!name) return;
       if (name === MAIN_FILE) { setCode(content, run === true); return; }
@@ -2447,7 +2457,6 @@ Assist the user with:
       delete this.files[name]; this.persist();
       if (this.active === name) this.open(MAIN_FILE); else this.renderTree();
     },
-    // Bulk import, e.g. the Componentizer agent's { "filename": "content" } JSON
     importMap(map) { Object.entries(map || {}).forEach(([n, c]) => this.updateFile(n, typeof c === 'string' ? c : (c && c.content) || '')); },
 
     open(name) {
@@ -2458,13 +2467,11 @@ Assist the user with:
       setView('code');
     },
 
-    // Whole-project context for the AI (Technical Writer, Refactor, Security...)
     getAllFilesForAI() {
       let ctx = 'PROJECT FILES:\n';
       this.list().forEach(n => { ctx += '\n--- File: ' + n + ' ---\n```\n' + this.getFileContent(n) + '\n```\n'; });
       return ctx;
     },
-    // Shape required by WebContainer.mount(): { 'a.js': { file: { contents } } }
     getAllForWebContainer() {
       const t = {}; this.list().forEach(n => { t[n] = { file: { contents: this.getFileContent(n) } }; }); return t;
     },
@@ -2476,16 +2483,14 @@ Assist the user with:
       icons();
     }
   };
-  const fileSystem = vfs; // alias so the later modules (2-18) can use the original name
+  const fileSystem = vfs;
 
-  // Keep VFS consistent when other code (AI output, undo, patches) calls setCode()
   const _setCodeOrig = setCode;
   setCode = function (code, run, record) {
     if (vfs.active !== MAIN_FILE) { const f = vfs.files[vfs.active]; if (f) f.content = editor.value; vfs.active = MAIN_FILE; }
     _setCodeOrig(code, run, record); vfs.renderTree();
   };
 
-  // When a non-index file is open, edits go to the VFS and must NOT touch state.code / the preview
   editor.addEventListener('input', e => {
     if (vfs.active === MAIN_FILE) return;
     e.stopImmediatePropagation();
@@ -2501,12 +2506,12 @@ Assist the user with:
   });
   bind('#btnDelFile', 'click', () => { if (vfs.active !== MAIN_FILE && confirm('Delete ' + vfs.active + '?')) vfs.remove(vfs.active); else if (vfs.active === MAIN_FILE) toast('index.html cannot be deleted'); });
 
-  /* ---------- Terminal panel (UI + local shell; WebContainer plugs in at Module 14) ---------- */
+  /* ---------- Terminal panel ---------- */
   const term = {
     out: $('#termOut'), hist: [], hi: 0,
     print(text, cls) { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = text; this.out.appendChild(d); this.out.scrollTop = this.out.scrollHeight; },
     clear() { this.out.innerHTML = ''; },
-    runner: null, // Module 14 sets this: async (argv) => void, to execute real npm/node commands
+    runner: null,
     async exec(line) {
       line = line.trim(); if (!line) return;
       this.print('$ ' + line, 'text-emerald-400'); this.hist.push(line); this.hi = this.hist.length;
@@ -2528,7 +2533,6 @@ Assist the user with:
     else if (e.key === 'ArrowDown' && term.hist.length) { term.hi = Math.min(term.hist.length, term.hi + 1); i.value = term.hist[term.hi] || ''; e.preventDefault(); }
   });
 
-  /* ---------- Panel toggles + action registry ---------- */
   const idePanels = { explorer: '#fileExplorer', terminal: '#terminalPanel' };
   function toggleIdePanel(name, forceOpen) {
     const el = $(idePanels[name]); if (!el) return;
@@ -2541,15 +2545,12 @@ Assist the user with:
   }
   delegate('[data-ide-toggle]', 'click', (e, t) => toggleIdePanel(t.dataset.ideToggle));
 
-  // Each action is wired to its AI agent in the next chunk (Modules 5-17). Until then they report status.
   const ideActions = {};
   ['deploy', 'pwa', 'security', 'seo', 'history'].forEach(k => { ideActions[k] = () => toast(k + ' action will be connected in the next chunk'); });
   delegate('[data-ide-action]', 'click', (e, t) => (ideActions[t.dataset.ideAction] || (() => {}))());
 
-  // Public namespace so later modules can register themselves without touching this block
   window.SAIM = { vfs, term, ideActions, toggleIdePanel };
   vfs.renderTree(); toggleIdePanel('explorer');
-
 
   /* =====================================================================
      CHUNK 2: AI agents, Ghost Text, Auto-Heal, Deploy, PWA, History, Node, Sync
@@ -2572,14 +2573,12 @@ Assist the user with:
   };
   const PATCH_FORMAT = '\nWhen changing existing code return ONLY patch blocks in this exact format (exact text from the code in SEARCH):\n<<<<<<< SEARCH\n(old code)\n=======\n(new code)\n>>>>>>> REPLACE';
 
-  /* ---------- Preview: inline VFS css/js so multi-file projects render ---------- */
   function inlineVfsAssets(src) {
     return src
       .replace(/<link\b[^>]*href=["']([^"']+)["'][^>]*>/gi, (m, h) => (/stylesheet/i.test(m) && vfs.files[h.replace(/^\.?\//, '')]) ? '<style>' + vfs.files[h.replace(/^\.?\//, '')].content + '</style>' : m)
       .replace(/<script\b[^>]*src=["']([^"']+)["'][^>]*>\s*<\/script>/gi, (m, h) => vfs.files[h.replace(/^\.?\//, '')] ? '<script>' + vfs.files[h.replace(/^\.?\//, '')].content.replace(/<\/script/gi, '<\\/script') + '<\/script>' : m);
   }
 
-  /* ---------- Version History (Module: snapshots in localStorage) ---------- */
   const versions = {
     list: store.get('sain.versions', []), last: 0,
     snap(label, force) {
@@ -2605,7 +2604,7 @@ Assist the user with:
   const _setCodeV = setCode;
   setCode = function (code, run, record) { if (record !== false) versions.snap('auto'); _setCodeV(code, run, record); };
 
-  /* ---------- Module 13: Ghost Text / inline autocomplete ---------- */
+  /* ---------- Ghost Text ---------- */
   const ghost = { text: '', t: null, seq: 0, inner: null };
   (function () {
     const w = document.createElement('div'); w.className = 'relative flex flex-1 min-w-0';
@@ -2625,7 +2624,7 @@ Assist the user with:
     ghostClear();
     if (!IDE.flags.ghost || !IDE.byok() || state.busy) return;
     const pos = editor.selectionStart; if (pos !== editor.selectionEnd) return;
-    if (editor.value.slice(pos).split('\n')[0].trim()) return;          // only at end of line
+    if (editor.value.slice(pos).split('\n')[0].trim()) return;
     const before = editor.value.slice(0, pos); if (before.trim().length < 15) return;
     const my = ++ghost.seq;
     ghost.t = setTimeout(async () => {
@@ -2635,7 +2634,7 @@ Assist the user with:
         t = t.replace(/\s+$/, '').split('\n').slice(0, 6).join('\n');
         if (my !== ghost.seq || editor.selectionStart !== pos || !t) return;
         ghostShow((/^\s/.test(t) || before.endsWith('\n') ? '' : '') + t, pos);
-      } catch (e) { /* silent: autocomplete must never interrupt typing */ }
+      } catch (e) { }
     }, 900);
   }, true);
   editor.addEventListener('keydown', e => {
@@ -2649,7 +2648,7 @@ Assist the user with:
   editor.addEventListener('scroll', ghostPos); editor.addEventListener('blur', ghostClear);
   editor.addEventListener('click', ghostClear);
 
-  /* ---------- Module 5: Autonomous Error Healing (preview console errors) ---------- */
+  /* ---------- Auto-Heal ---------- */
   const heal = { n: 0, t: null, warned: false };
   window.addEventListener('message', e => {
     if (e.source !== frame.contentWindow || !e.data || !e.data.__sain) return;
@@ -2665,7 +2664,7 @@ Assist the user with:
   });
   editor.addEventListener('input', () => { heal.n = 0; heal.warned = false; });
 
-  /* ---------- Module 10: Security Auditor ---------- */
+  /* ---------- Security ---------- */
   const SEC_PROMPT = 'You are a Cybersecurity Expert. Review the HTML/JS for: 1) XSS, 2) external CDN scripts without integrity, 3) hardcoded API keys/secrets, 4) dangerous functions (eval, innerHTML without sanitising). If issues are found, fix them. If secure, reply exactly: SECURE.' + PATCH_FORMAT;
   function staticScan(code) {
     const out = [];
@@ -2685,14 +2684,14 @@ Assist the user with:
     toast(r.applied ? 'Security fixes applied' : 'AI reported issues but no patch could be applied (see terminal)', 4500);
   }
 
-  /* ---------- Module 17: SEO & performance ---------- */
+  /* ---------- SEO ---------- */
   async function optimizeAppPerformance() {
     const sys = 'Act as an SEO and web performance expert (like Lighthouse). Add missing meta tags (description, viewport, Open Graph), aria-labels, alt text, loading="lazy" for images, defer for scripts. Do not change the visual design or behaviour.' + PATCH_FORMAT;
     const r = await applyAiOutput(await IDE.ai(sys, state.code));
     toast(r.applied ? 'SEO & performance improvements applied' : 'No changes were applied');
   }
 
-  /* ---------- Convert to PWA (local, no AI) ---------- */
+  /* ---------- PWA ---------- */
   function convertToPWA() {
     let c = state.code; if (!c.trim()) return toast('No code');
     if (/rel=["']manifest["']/i.test(c)) return toast('Already a PWA');
@@ -2707,7 +2706,7 @@ Assist the user with:
     setCode(c, false); toast('PWA files added (manifest.json, sw.js). Deploy all files together to install.', 5000);
   }
 
-  /* ---------- 1-Click Deploy (Netlify file-digest API, runs in your browser) ---------- */
+  /* ---------- Deploy ---------- */
   async function sha1(str) { const b = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
   async function deployNetlify() {
     let tok = sstore.get('sain.netlifyToken', '');
@@ -2728,7 +2727,7 @@ Assist the user with:
     toast('Deployed! URL copied: ' + url, 6000);
   }
 
-  /* ---------- Module 9: Componentizer ---------- */
+  /* ---------- Componentizer ---------- */
   const componentAgent = { prompt: 'You are a Senior Software Architect. Break this monolithic HTML/JS file into modular files (separate .css, .js, optional Web Components via customElements.define). Return ONLY a valid JSON object mapping filename to full file content. It MUST include a rewritten "index.html" that references the other files with <link href="x.css"> and <script src="x.js">.' };
   async function refactorIntoComponents() {
     const raw = IDE.strip(await IDE.ai(componentAgent.prompt, state.code));
@@ -2737,20 +2736,20 @@ Assist the user with:
     vfs.importMap(obj); vfs.open('index.html'); setCode(state.code, true); toast(Object.keys(obj).length + ' files created. Preview inlines them automatically.', 5000);
   }
 
-  /* ---------- Module 11: Technical Writer ---------- */
+  /* ---------- Technical Writer ---------- */
   async function generateDocumentation() {
     const sys = 'You are a Technical Writer. From the project files below write a professional, detailed README.md: title & description, features, tech stack, setup & run, folder tree. Return only the markdown.\n\n' + vfs.getAllFilesForAI();
     vfs.updateFile('README.md', IDE.strip(await IDE.ai(sys, 'Generate README.md')), 'markdown'); vfs.open('README.md'); toast('README.md created');
   }
 
-  /* ---------- Module 16: Backend architect ---------- */
+  /* ---------- Backend ---------- */
   async function generateBackend() {
     const req = (prompt('Describe your app/data (e.g. blog with users, posts, comments)') || '').trim(); if (!req) return;
     const sys = 'You are a Database Architect. Generate a production-ready Prisma schema (schema.prisma) with all models, relations (1-N, N-M) and enums. Output ONLY raw Prisma code.';
     vfs.updateFile('schema.prisma', IDE.strip(await IDE.ai(sys, 'Request: ' + req + '\n\nExisting app:\n' + state.code.slice(0, 6000))), 'prisma'); vfs.open('schema.prisma'); toast('schema.prisma created');
   }
 
-  /* ---------- Module 15: AI QA tester (sandboxed iframe) ---------- */
+  /* ---------- AI Tests ---------- */
   function runInSandbox(code, tests, ms) {
     return new Promise(res => {
       const f = document.createElement('iframe'); f.sandbox = 'allow-scripts'; f.style.display = 'none';
@@ -2775,7 +2774,7 @@ Assist the user with:
     state.errors = r.failures.slice(); updateErrBadge(); state.busy = false; $('#btnFix').click(); state.busy = true;
   }
 
-  /* ---------- Module 12: Vision to code (Gemini key required; chat streaming has no image path) ---------- */
+  /* ---------- Vision ---------- */
   async function visionToCode() {
     const key = state.keys && state.keys.gemini; if (!key) throw new Error('Add a Gemini API key in Keys for image input');
     const file = await new Promise(r => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/png,image/jpeg,image/webp'; i.onchange = () => r(i.files[0]); i.click(); });
@@ -2789,7 +2788,7 @@ Assist the user with:
     setCode(m[1].trim(), true); toast('UI replicated from image');
   }
 
-  /* ---------- Module 14: WebContainer (real Node.js in the browser) ---------- */
+  /* ---------- WebContainer ---------- */
   const node = {
     wc: null,
     tree() {
@@ -2813,7 +2812,7 @@ Assist the user with:
     }
   };
 
-  /* ---------- Module 18: Real-time multiplayer (Firebase Realtime Database) ---------- */
+  /* ---------- Live Sync ---------- */
   const sync = {
     room: null, ref: null, id: uid(), t: null,
     join(room) {
@@ -2827,7 +2826,6 @@ Assist the user with:
   };
   editor.addEventListener('input', () => sync.broadcast());
 
-  /* ---------- Wire actions + flags ---------- */
   Object.assign(ideActions, {
     deploy: () => IDE.busy('Deploying', deployNetlify),
     pwa: convertToPWA,
