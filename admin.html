@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>SAIM AI AGENT — Admin Dashboard</title>
+<title>SAIM AI AGENT — Admin Dashboard (Dual Sync)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { theme: { extend: {
@@ -13,13 +13,12 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <style>
   html, body { height: 100%; background: #07070d; color: #e7e7f0; font-family: Inter, system-ui, sans-serif; }
-  .glass { background: rgba(18,18,32,.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.07); }
-  .inp { width: 100%; padding: .65rem .85rem; border-radius: .75rem; background: #121222; border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 13px; outline: none; transition: border-color .15s; }
+  .glass { background: rgba(18,18,32,.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.07); }
+  .inp { width: 100%; padding: .65rem .85rem; border-radius: .75rem; background: #121222; border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 13px; outline: none; }
   .inp:focus { border-color: #a855f7; }
-  .pbtn { width: 100%; padding: .75rem; border-radius: .75rem; font-size: 13px; font-weight: 600; background: linear-gradient(90deg,#9333ea,#22d3ee); color: #fff; cursor: pointer; transition: filter .15s; }
+  .pbtn { width: 100%; padding: .75rem; border-radius: .75rem; font-size: 13px; font-weight: 600; background: linear-gradient(90deg,#9333ea,#22d3ee); color: #fff; cursor: pointer; border: none; transition: filter .15s; }
   .pbtn:hover { filter: brightness(1.1); }
   .grad-text { background: linear-gradient(110deg,#a855f7,#22d3ee 40%,#ec4899 75%,#a855f7); background-size: 220% auto; -webkit-background-clip: text; background-clip: text; color: transparent; }
 </style>
@@ -27,22 +26,18 @@
 <body class="min-h-screen grid place-items-center p-4 antialiased">
 
   <div class="w-full max-w-xl glass rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-    <!-- Decorative Glow -->
-    <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-600 rounded-full blur-[80px] opacity-30 pointer-events-none"></div>
-    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-cyan-500 rounded-full blur-[80px] opacity-25 pointer-events-none"></div>
-
     <div class="flex items-center gap-3 mb-6">
       <div class="w-10 h-10 rounded-2xl glass grid place-items-center text-purple-400 font-bold">SA</div>
       <div>
-        <h1 class="font-extrabold text-lg text-white">SAIM Studio <span class="grad-text">Admin Panel</span></h1>
-        <p class="text-xs text-zinc-400">Manage global AI API keys for Firebase Realtime Database</p>
+        <h1 class="font-extrabold text-lg text-white">SAIM Studio <span class="grad-text">Admin Panel (Dual Sync)</span></h1>
+        <p class="text-xs text-zinc-400">Saves keys to Realtime DB & Firestore simultaneously</p>
       </div>
     </div>
 
-    <!-- Auth Guard (Login State) -->
+    <!-- Auth Section -->
     <div id="authSection" class="mb-6 p-4 rounded-2xl bg-ink-900 border border-white/5 flex items-center justify-between text-xs">
       <span id="adminStatus" class="text-amber-400">Checking authentication...</span>
-      <button id="btnLogin" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition hidden">Login with Google</button>
+      <button id="btnLogin" type="button" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition cursor-pointer hidden">Login with Google</button>
     </div>
 
     <!-- Admin Form -->
@@ -72,19 +67,19 @@
         <input type="text" id="adminModel" class="inp font-mono" value="gemini-flash-latest" />
       </div>
 
-      <button type="submit" class="pbtn mt-2">Save Keys to Firebase Database</button>
+      <button type="submit" id="saveBtn" class="pbtn mt-2">Save Keys to Realtime DB & Firestore</button>
     </form>
 
-    <div id="adminToast" class="mt-4 text-center text-xs text-emerald-400 font-medium hidden"></div>
+    <div id="adminToast" class="mt-4 p-3 rounded-xl bg-ink-900 text-center text-xs font-medium hidden"></div>
   </div>
 
-  <!-- Firebase Scripts (Compat v10) -->
+  <!-- Firebase Scripts (Compat v10: App, Auth, Database, Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // আপনার মূল অ্যাপের সেইম ফায়ারবেস কনফিগারেশন এখানে দেওয়া হলো
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyA2tXddGxNdcooTlg9JsYNUwzpxxnobE0A",
       authDomain: "saimaiagent.firebaseapp.com",
@@ -95,70 +90,96 @@
       appId: "1:1063618307954:web:5ff9a4983ed1d1f18e9feb"
     };
 
-    firebase.initializeApp(FIREBASE_CONFIG);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
     const auth = firebase.auth();
-    const db = firebase.database();
+    const rtdb = firebase.database();
+    const fsdb = firebase.firestore();
 
-    const $ = s => document.querySelector(s);
-    const statusEl = $('#adminStatus');
-    const loginBtn = $('#btnLogin');
-    const toastEl = $('#adminToast');
+    const statusEl = document.getElementById('adminStatus');
+    const loginBtn = document.getElementById('btnLogin');
+    const toastEl = document.getElementById('adminToast');
 
     function showToast(msg, isErr) {
       toastEl.textContent = msg;
-      toastEl.className = `mt-4 text-center text-xs font-medium ${isErr ? 'text-red-400' : 'text-emerald-400'}`;
+      toastEl.className = `mt-4 p-3 rounded-xl bg-ink-900 text-center text-xs font-medium ${isErr ? 'text-red-400 border border-red-500/30' : 'text-emerald-400 border border-emerald-500/30'}`;
       toastEl.classList.remove('hidden');
-      setTimeout(() => toastEl.classList.add('hidden'), 4000);
     }
 
-    // Auth State Check
+    // Auth State
     auth.onAuthStateChanged(user => {
       if (user) {
-        statusEl.textContent = `Logged in as: ${user.email || user.displayName}`;
+        statusEl.textContent = `Logged in: ${user.email || user.displayName}`;
         statusEl.className = 'text-emerald-400';
         loginBtn.classList.add('hidden');
-        loadKeysFromFirebase();
+        loadKeys();
       } else {
-        statusEl.textContent = 'Please log in to manage admin keys.';
+        statusEl.textContent = 'Please log in to manage keys.';
         statusEl.className = 'text-amber-400';
         loginBtn.classList.remove('hidden');
       }
     });
 
-    loginBtn.addEventListener('click', () => {
+    loginBtn.onclick = () => {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(e => alert(e.message));
-    });
+      auth.signInWithPopup(provider).catch(e => showToast('Login Error: ' + e.message, true));
+    };
 
-    // Load existing keys from Realtime Database
-    function loadKeysFromFirebase() {
-      db.ref('config/system_keys').once('value').then(snap => {
-        const data = snap.val() || {};
-        $('#adminGemini').value = data.gemini || '';
-        $('#adminOpenai').value = data.openai || '';
-        $('#adminDeepseek').value = data.deepseek || '';
-        $('#adminAnthropic').value = data.anthropic || '';
-        if (data.geminiModel) $('#adminModel').value = data.geminiModel;
+    function loadKeys() {
+      showToast('Loading keys from Firebase...', false);
+      // প্রথমে Realtime DB থেকে লোড করার চেষ্টা করবে, না পেলে Firestore থেকে
+      rtdb.ref('config/system_keys').once('value').then(snap => {
+        let data = snap.val();
+        if (!data) {
+          return fsdb.collection('config').doc('system_keys').get().then(doc => doc.exists ? doc.data() : {});
+        }
+        return data;
+      }).then(data => {
+        document.getElementById('adminGemini').value = data.gemini || '';
+        document.getElementById('adminOpenai').value = data.openai || '';
+        document.getElementById('adminDeepseek').value = data.deepseek || '';
+        document.getElementById('adminAnthropic').value = data.anthropic || '';
+        if (data.geminiModel) document.getElementById('adminModel').value = data.geminiModel;
+        showToast('Keys loaded successfully!', false);
+        setTimeout(() => toastEl.classList.add('hidden'), 2500);
+      }).catch(err => {
+        showToast('Load Failed: ' + err.message, true);
       });
     }
 
-    // Save keys to Realtime Database
-    $('#adminForm').addEventListener('submit', e => {
+    document.getElementById('adminForm').onsubmit = async (e) => {
       e.preventDefault();
+      
+      if (!auth.currentUser) {
+        showToast('Error: You must be logged in to save keys!', true);
+        return;
+      }
+
+      showToast('Saving to Realtime DB & Firestore...', false);
+
       const payload = {
-        gemini: $('#adminGemini').value.trim(),
-        openai: $('#adminOpenai').value.trim(),
-        deepseek: $('#adminDeepseek').value.trim(),
-        anthropic: $('#adminAnthropic').value.trim(),
-        geminiModel: $('#adminModel').value.trim() || 'gemini-flash-latest'
+        gemini: document.getElementById('adminGemini').value.trim(),
+        openai: document.getElementById('adminOpenai').value.trim(),
+        deepseek: document.getElementById('adminDeepseek').value.trim(),
+        anthropic: document.getElementById('adminAnthropic').value.trim(),
+        geminiModel: document.getElementById('adminModel').value.trim() || 'gemini-flash-latest',
+        updatedAt: firebase.firestore.FieldValue ? firebase.firestore.FieldValue.serverTimestamp() : Date.now()
       };
 
-      db.ref('config/system_keys').set(payload)
-        .then(() => showToast('Successfully updated API keys in Firebase!'))
-        .catch(err => showToast('Error: ' + err.message, true));
-    });
+      try {
+        // ১. রিয়েলটাইম ডেটাবেসে সেভ করা
+        await rtdb.ref('config/system_keys').set(payload);
 
-    lucide.createIcons();
+        // ২. ফায়ারস্টোরে সেভ করা
+        await fsdb.collection('config').doc('system_keys').set(payload, { merge: true });
+
+        showToast('✅ Successfully saved to BOTH Realtime DB & Firestore!', false);
+      } catch (err) {
+        console.error(err);
+        showToast('❌ Save Failed: ' + err.message, true);
+      }
+    };
   </script>
 </body>
 </html>
