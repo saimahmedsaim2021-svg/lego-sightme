@@ -472,7 +472,7 @@ Assist the user with:
     priority: store.get('sain.priority', ['gemini/gemini-2.5-flash', 'anthropic/claude-sonnet-5-5', 'groq/llama-3.3-70b-versatile', 'deepseek/deepseek-chat', 'openai/gpt-4o-mini']),
     active: store.get('sain.active', 'gemini/gemini-2.5-flash'),
     keys: store.get('sain.keys', {}),
-    ownerGeminiKey: '', ownerModel: 'gemini-2.5-flash', githubLogin: '', user: null,
+    ownerGeminiKey: '', ownerModel: 'gemini-flash-latest', githubLogin: '', user: null,
     customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
     githubToken: store.get('sain.githubToken', ''),
     agent: store.get('sain.agent', 'coder'),
@@ -669,7 +669,7 @@ Assist the user with:
     mistral: 'https://api.mistral.ai/v1/models', together: 'https://api.together.xyz/v1/models', openrouter: 'https://openrouter.ai/api/v1/auth/key'
   };
   const PREFER = {
-    gemini: [/^gemini-[\d.]+-flash$/, /^gemini-[\d.]+-pro$/, /flash/], anthropic: [/sonnet/, /haiku/, /opus/],
+    gemini: [/^gemini-[\d.]+-flash$/, /^gemini-flash-latest$/, /^gemini-[\d.]+-flash-lite$/, /^gemini-[\d.]+-pro$/], anthropic: [/sonnet/, /haiku/, /opus/],
     openai: [/^gpt-4o-mini$/, /^gpt-4o$/, /^gpt-[\d.]+-mini$/, /^gpt-/], deepseek: [/chat/, /reasoner/], groq: [/llama-3\.3-70b/, /llama/],
     mistral: [/large-latest/, /codestral/, /./], together: [/Llama-3\.3-70B/, /Llama/], custom: [/./]
   };
@@ -694,7 +694,7 @@ Assist the user with:
       const hit = ids.filter(i => re.test(i)).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
       if (hit && !out.includes(hit)) out.push(hit);
     });
-    return out.slice(0, 2);
+    return out.slice(0, 4);
   }
   function applyDiscovered(p, ids) {
     if (!ids || !ids.length) return;
@@ -702,7 +702,7 @@ Assist the user with:
     setCatalog(state.models.filter(m => m.provider !== p).concat(ids.slice(0, 150).map(id => ({ provider: p, id: p + '/' + id, name: id }))));
     state.priority = state.priority.filter(id => id.split('/')[0] !== p || ids.includes(sub(id)));
     const picks = pickModels(p, ids).map(id => p + '/' + id);
-    if (!state.priority.some(id => id.split('/')[0] === p)) state.priority.push(...picks);
+    picks.forEach(id => { if (!state.priority.includes(id)) state.priority.push(id); });
     const ap = (state.active || '').split('/')[0];
     if (!hasKeyFor(ap) || (ap === p && !ids.includes(sub(state.active)))) state.active = state.priority.find(id => id.split('/')[0] === p) || state.active;
   }
@@ -889,6 +889,20 @@ Assist the user with:
     return out;
   }
 
+  async function withRetry(fn, signal, label) {
+    for (let a = 0; ; a++) {
+      try { return await fn(); }
+      catch (err) {
+        if (a < 2 && [500, 502, 503, 504].includes(Number(err.status)) && !signal.aborted) {
+          if (label) $('#handoffStatusText').textContent = label + ' is busy, retrying...';
+          await new Promise(r => setTimeout(r, (a + 1) * 1500));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
   /* ---------- Unified Stream Runner (Owner Trial vs User BYOK) ---------- */
   async function runUnifiedStream(rawMessages, opts) {
     opts = opts || {};
@@ -911,10 +925,16 @@ Assist the user with:
 
       try {
         const system = opts.system || OWNER_TRIAL_PROMPT;
-        const text = await streamGeminiWithKey(ownerKey, state.ownerModel || 'gemini-2.5-flash', messages, system, ctrl.signal, (chunk, acc) => {
+        const onTrial = (chunk, acc) => {
           if (opts.onChunk) opts.onChunk(chunk, acc, { name: 'SAIM AI AGENT' });
           $('#tokensIndicator').textContent = `~${Math.round(acc.length / 4)} tok`;
-        });
+        };
+        let text, last404 = null;
+        for (const mid of Array.from(new Set([state.ownerModel, 'gemini-flash-latest', 'gemini-2.5-flash']))) {
+          try { text = await withRetry(() => streamGeminiWithKey(ownerKey, mid, messages, system, ctrl.signal, onTrial), ctrl.signal, 'SAIM AI AGENT'); break; }
+          catch (e) { if (Number(e.status) !== 404) throw e; last404 = e; }
+        }
+        if (text === undefined) throw last404;
         clearTimeout(timer);
         $('#handoffStatusText').textContent = 'Completed (SAIM AI AGENT)';
         setTimeout(() => $('#handoffStrip').classList.add('hidden'), 2500);
@@ -931,7 +951,7 @@ Assist the user with:
     const system = opts.system || ((AGENTS[state.agent] || AGENTS.coder).prompt + (extra ? '\n\nCustom Instructions:\n' + extra : ''));
     const ids = [state.active].concat(state.priority).filter((id, i, a) => id && a.indexOf(id) === i);
     const chain = ids.map(id => modelById(id) || { id, name: id.split('/').pop(), provider: id.split('/')[0] });
-    const failures = [];
+    const failures = [], dead = [];
     
     let lastError = null;
 
@@ -950,13 +970,14 @@ Assist the user with:
 
 
       try {
-        let text = '';
-        if (entry.provider === 'gemini') {
-          text = await streamGeminiWithKey(state.keys.gemini.trim(), modelName(entry), messages, system, ctrl.signal, opts.onChunk);
-        } else if (entry.provider === 'anthropic') {
-          text = await streamAnthropic(entry, messages, system, ctrl.signal, opts.onChunk);
-        } else {
-          text = await streamOpenAICompat(entry, messages, system, ctrl.signal, opts.onChunk);
+        const call = () => entry.provider === 'gemini' ? streamGeminiWithKey(state.keys.gemini.trim(), modelName(entry), messages, system, ctrl.signal, opts.onChunk)
+          : entry.provider === 'anthropic' ? streamAnthropic(entry, messages, system, ctrl.signal, opts.onChunk)
+          : streamOpenAICompat(entry, messages, system, ctrl.signal, opts.onChunk);
+        const text = await withRetry(call, ctrl.signal, entry.name);
+        if (dead.length) {
+          state.priority = state.priority.filter(id => !dead.includes(id));
+          if (dead.includes(state.active)) state.active = entry.id;
+          persistModels(); renderModels(); updateActiveLabel();
         }
 
         clearTimeout(timer);
@@ -968,6 +989,7 @@ Assist the user with:
         const kind = classifyError(err, err.status);
         lastError = err.name === 'AbortError' ? new Error('Timed out') : err;
         failures.push(entry.name + ': ' + shortErr(lastError));
+        if (Number(err.status) === 404) dead.push(entry.id);
         const next = chain.slice(i + 1).find(c => hasKeyFor(c.provider));
         if (next) {
           const warn = `⚠️ ${entry.name} [${kind}] → Handing off to ${next.name}...`;
