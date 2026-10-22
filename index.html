@@ -79,6 +79,8 @@
   #assistantPanel { transform: translateX(110%); transition: transform .3s cubic-bezier(.22,.8,.3,1); }
   #assistantPanel.open { transform: none; }
   .streaming-cursor::after { content: '▋'; margin-left: 2px; animation: blink 0.8s infinite; color: #22d3ee; }
+  .voice-listening { animation: pulseMic 1.5s infinite; color: #34d399 !important; background: rgba(52,211,153,.15) !important; }
+  @keyframes pulseMic { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,.4); } 70% { box-shadow: 0 0 0 8px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
   /* iOS zooms into inputs below 16px */
   @media (max-width: 1023px) { .inp, #promptInput, #guideInput { font-size: 16px !important; } }
 </style>
@@ -107,8 +109,8 @@
     </div>
     <div class="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
       <article class="glass rounded-3xl p-5"><i data-lucide="git-merge" class="w-5 h-5 text-purple-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">Auto-Handoff</h3><p class="text-xs text-zinc-400 leading-relaxed">Switches to the next model automatically when one fails.</p></article>
-      <article class="glass rounded-3xl p-5"><i data-lucide="cpu" class="w-5 h-5 text-cyan-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">All Providers</h3><p class="text-xs text-zinc-400 leading-relaxed">10 providers plus custom endpoints.</p></article>
-      <article class="glass rounded-3xl p-5"><i data-lucide="binary" class="w-5 h-5 text-emerald-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">Surgical Patcher</h3><p class="text-xs text-zinc-400 leading-relaxed">Edit specific lines without rewriting the file.</p></article>
+      <article class="glass rounded-3xl p-5"><i data-lucide="cpu" class="w-5 h-5 text-cyan-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">All Major Models</h3><p class="text-xs text-zinc-400 leading-relaxed">Gemini, Claude, OpenAI, DeepSeek, Groq and more.</p></article>
+      <article class="glass rounded-3xl p-5"><i data-lucide="mic" class="w-5 h-5 text-emerald-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">Voice AI</h3><p class="text-xs text-zinc-400 leading-relaxed">Bengali and English voice input with spoken replies.</p></article>
       <article class="glass rounded-3xl p-5"><i data-lucide="github" class="w-5 h-5 text-pink-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">GitHub Push</h3><p class="text-xs text-zinc-400 leading-relaxed">Sign in and push your code to a repository.</p></article>
     </div>
   </section>
@@ -424,7 +426,7 @@
   }
 
   const PROVIDERS = [
-    { id: 'gemini', name: 'Google Gemini', icon: 'gem', color: 'text-sky-300', bg: 'bg-sky-500/10', hint: 'AIzaSy...', docs: 'https://aistudio.google.com/app/apikey', desc: 'Gemini 2.5 Flash & Pro' },
+    { id: 'gemini', name: 'Google Gemini', icon: 'gem', color: 'text-sky-300', bg: 'bg-sky-500/10', hint: 'AIzaSy...', docs: 'https://aistudio.google.com/app/apikey', desc: 'Gemini Flash & Pro' },
     { id: 'anthropic', name: 'Anthropic Claude', icon: 'brain', color: 'text-orange-300', bg: 'bg-orange-500/10', hint: 'sk-ant-...', docs: 'https://console.anthropic.com/settings/keys', desc: 'Claude Sonnet, Haiku & Opus' },
     { id: 'openai', name: 'OpenAI (ChatGPT)', icon: 'sparkles', color: 'text-emerald-300', bg: 'bg-emerald-500/10', hint: 'sk-...', docs: 'https://platform.openai.com/api-keys', desc: 'GPT-4o & mini models' },
     { id: 'deepseek', name: 'DeepSeek', icon: 'waves', color: 'text-blue-300', bg: 'bg-blue-500/10', hint: 'sk-...', docs: 'https://platform.deepseek.com/api_keys', desc: 'DeepSeek V3 & R1' },
@@ -469,8 +471,8 @@ Assist the user with:
 
   const state = {
     models: [],
-    priority: store.get('sain.priority', ['gemini/gemini-2.5-flash', 'anthropic/claude-sonnet-5-5', 'groq/llama-3.3-70b-versatile', 'deepseek/deepseek-chat', 'openai/gpt-4o-mini']),
-    active: store.get('sain.active', 'gemini/gemini-2.5-flash'),
+    priority: store.get('sain.priority', ['gemini/gemini-flash-latest', 'anthropic/claude-sonnet-5-5', 'groq/llama-3.3-70b-versatile', 'deepseek/deepseek-chat', 'openai/gpt-4o-mini']),
+    active: store.get('sain.active', 'gemini/gemini-flash-latest'),
     keys: store.get('sain.keys', {}),
     ownerGeminiKey: '', ownerModel: 'gemini-flash-latest', githubLogin: '', user: null,
     customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
@@ -520,7 +522,7 @@ Assist the user with:
 
   /* ---------- Landing subtitle ---------- */
   (function () {
-    const phrases = ['Multi-Model Auto-Handoff: Zero Broken Code.', 'Universal BYOK: Gemini, Claude, OpenAI, Groq & Local.', 'Surgical Patch Engine: Edit single lines in seconds.', 'Sign in with GitHub and push straight to a repository.'];
+    const phrases = ['Multi-Model Auto-Handoff: Zero Broken Code.', 'Universal BYOK: Gemini, Claude, OpenAI, Groq & Local.', 'Speak to the AI in Bengali and English.', 'Surgical Patch Engine: Edit single lines in seconds.', 'Sign in with GitHub and push straight to a repository.'];
     const el = $('#dynamicSubtitle'); let p = 0, c = 0, del = false;
     $('#year').textContent = new Date().getFullYear();
     (function tick() {
@@ -582,7 +584,7 @@ Assist the user with:
 
   /* ---------- Models ---------- */
   const SEED = [
-    ['gemini', 'gemini-2.5-flash', 'Gemini 2.5 Flash'], ['gemini', 'gemini-2.5-pro', 'Gemini 2.5 Pro'],
+    ['gemini', 'gemini-flash-latest', 'Gemini Flash (latest)'], ['gemini', 'gemini-pro-latest', 'Gemini Pro (latest)'],
     ['anthropic', 'claude-sonnet-5-5', 'Claude Sonnet 5.5'], ['anthropic', 'claude-haiku-5-5', 'Claude Haiku 5.5'],
     ['openai', 'gpt-4o', 'OpenAI GPT-4o'], ['openai', 'gpt-4o-mini', 'OpenAI GPT-4o Mini'],
     ['deepseek', 'deepseek-chat', 'DeepSeek V3'], ['deepseek', 'deepseek-reasoner', 'DeepSeek R1'],
@@ -609,6 +611,10 @@ Assist the user with:
   }
   const persistModels = () => { store.set('sain.priority', state.priority); store.set('sain.active', state.active); };
 
+  function tierBadge(m) {
+    const free = (m.provider === 'gemini' && /flash/i.test(m.id)) || m.provider === 'groq';
+    return free ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300">Free tier</span>' : '';
+  }
   function modelRow(m, ranked) {
     const prov = providerOf(m.provider) || { icon: 'cpu', color: 'text-zinc-300', name: m.provider };
     const idx = state.priority.indexOf(m.id), hasKey = hasKeyFor(m.provider);
@@ -616,7 +622,7 @@ Assist the user with:
     row.className = 'flex items-center gap-2 p-2 rounded-xl border cursor-pointer transition ' + (m.id === state.active ? 'bg-purple-500/15 border-purple-500/40' : 'bg-ink-800/60 border-transparent hover:border-white/10');
     row.innerHTML = (ranked ? `<span class="w-4 text-center text-[10px] text-zinc-500 font-mono">${idx + 1}</span>` : '') +
       `<div class="w-6 h-6 rounded-lg bg-white/5 grid place-items-center shrink-0"><i data-lucide="${prov.icon}" class="w-3.5 h-3.5 ${prov.color}"></i></div>` +
-      `<div class="min-w-0 flex-1"><div class="text-[12px] font-medium truncate">${esc(m.name)}</div><div class="text-[10px] truncate ${hasKey ? 'text-zinc-500' : 'text-amber-400'}">${esc(prov.name)}${hasKey ? '' : ' · key required'}</div></div><div class="flex items-center shrink-0"></div>`;
+      `<div class="min-w-0 flex-1"><div class="flex items-center gap-1.5"><div class="text-[12px] font-medium truncate">${esc(m.name)}</div>${tierBadge(m)}</div><div class="text-[10px] truncate ${hasKey ? 'text-zinc-500' : 'text-amber-400'}">${esc(prov.name)}${hasKey ? '' : ' · key required'}</div></div><div class="flex items-center shrink-0"></div>`;
     const actions = row.lastElementChild;
     const mk = (icon, title, fn, cls) => {
       const b = document.createElement('button'); b.type = 'button'; b.title = title;
@@ -1593,10 +1599,11 @@ Assist the user with:
 
   /* ---------- Voice (speech-to-text + spoken replies) ---------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const voice = { rec: null, on: false, convo: false, idle: 0, speak: !!store.get('sain.voiceSpeak', false), lang: store.get('sain.voiceLang', 'en-US') };
+  const voice = { rec: null, on: false, convo: false, idle: 0, speak: !!store.get('sain.voiceSpeak', false), lang: store.get('sain.voiceLang', 'bn-BD'), speaking: false, utt: null };
   function updateVoiceUI() {
     const set = (id, on, cls) => { const b = $(id); if (b) cls.split(' ').forEach(c => b.classList.toggle(c, on)); };
-    set('#btnMic', voice.on, '!text-red-400 bg-red-500/15');
+    set('#btnMic', voice.on && !voice.convo, '!text-red-400 bg-red-500/15');
+    set('#btnVoiceMode', voice.convo && voice.on && !voice.speaking, 'voice-listening');
     set('#btnVoiceMode', voice.convo, '!text-cyan-300 bg-cyan-500/15');
     set('#btnSpeak', voice.speak || voice.convo, '!text-purple-300 bg-purple-500/15');
     const l = $('#btnVoiceLang'); if (l) l.textContent = voice.lang.startsWith('bn') ? 'BN' : 'EN';
@@ -1605,7 +1612,7 @@ Assist the user with:
     if (voice.rec) { voice.rec.onend = null; try { voice.rec.stop(); } catch (e) {} }
     voice.rec = null; voice.on = false; updateVoiceUI();
   }
-  function stopSpeaking() { try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} }
+  function stopSpeaking() { voice.utt = null; voice.speaking = false; try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} updateVoiceUI(); }
   function startListening() {
     if (!SR) { toast('Voice input is not supported in this browser'); voice.convo = false; updateVoiceUI(); return; }
     stopListening(); stopSpeaking();
@@ -1639,7 +1646,7 @@ Assist the user with:
   }
   function speakText(text, done) {
     if (!('speechSynthesis' in window)) { if (done) done(); return; }
-    const clean = text.replace(/```[\s\S]*?```/g, ' The code is ready in the preview. ').replace(/https?:\/\/\S+/g, '').replace(/[*_`#>]/g, '').trim().slice(0, 1200);
+    const clean = text.replace(/```[\s\S]*?```/g, ' ').replace(/https?:\/\/\S+/g, '').replace(/[*_`#>]/g, '').trim().slice(0, 1200);
     if (!clean) { if (done) done(); return; }
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(clean);
@@ -1647,7 +1654,8 @@ Assist the user with:
     const vs = speechSynthesis.getVoices();
     const v = vs.find(x => x.lang === voice.lang) || vs.find(x => x.lang.startsWith(voice.lang.slice(0, 2)));
     if (v) u.voice = v;
-    u.onend = u.onerror = () => { if (done) done(); };
+    voice.utt = u; voice.speaking = true; updateVoiceUI();
+    u.onend = u.onerror = () => { if (voice.utt !== u) return; voice.utt = null; voice.speaking = false; updateVoiceUI(); if (done) done(); };
     speechSynthesis.speak(u);
   }
   function voiceAfterReply(text) {
