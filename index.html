@@ -473,7 +473,21 @@
   const maskKey = k => { k = String(k || ''); return k.length > 8 ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + k.slice(-4) : '\u2022\u2022\u2022\u2022'; };
   const sanitizeText = (s, max) => String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').slice(0, max || 20000);
   const safeUrl = u => { try { const x = new URL(String(u)); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href.replace(/\/+$/, '') : ''; } catch (e) { return ''; } };
-  const redact = s => String(s == null ? '' : s).replace(/AIza[\w-]{20,}/g, 'AIza\u2026').replace(/sk-[\w-]{12,}/g, 'sk-\u2026').replace(/gsk_[\w-]{12,}/g, 'gsk_\u2026').replace(/pplx-[\w-]{12,}/g, 'pplx-\u2026');
+  const redact = s => String(s == null ? '' : s).replace(/AIza[\w-]{20,}/g, 'AIza\u2026').replace(/sk-[\w-]{12,}/g, 'sk-\u2026').replace(/gsk_[\w-]{12,}/g, 'gsk_\u2026').replace(/pplx-[\w-]{12,}/g, 'pplx-\u2026').replace(/sk-or-v1-[\w-]{12,}/g, 'sk-or-v1-\u2026');
+
+  // =====================================================
+  // Obfuscated OpenRouter key (base64 of reversed string)
+  // This deters casual inspection only; NOT real security.
+  // The key is placed here so users can chat for free without adding their own.
+  // =====================================================
+  const _enc = 'M2U4MDlhNDY3MWJlNmQxYTRkMGQ2ZDliOWU4MGVhNDU5YWJlY2E4MTMxNjk0NTA1YTI1NTBlNmM2ZWJkNWQ4YWZlLTF2LXJvLWtz';
+  function _decodeKey() {
+    try {
+      const rev = atob(_enc);
+      return rev.split('').reverse().join('');
+    } catch (e) { return ''; }
+  }
+  const OPENROUTER_FALLBACK_KEY = _decodeKey();
 
   let toastTimer;
   function toast(msg, ms) {
@@ -548,26 +562,38 @@ Always reply in the language the user writes in (Bengali or English). Never answ
   const VOICE_RULES = `
 VOICE MODE: the user is talking by voice. Keep plain-text answers short and conversational (1-3 sentences), with no markdown, lists or emojis. If code was requested, give the code block and then one short spoken sentence summarising what you did.`;
 
-  const OWNER_TRIAL_PROMPT = `You are "SAIM AI AGENT", the customer support and AI specialist of SAIM Studio.
+  const OWNER_TRIAL_PROMPT = `You are "SAIM AI AGENT", the friendly customer support and AI specialist of SAIM Studio.
 Greet the user warmly and ask how you can help.
-RULES FOR TRIAL MODE:
-1. You may answer questions about software, advise on tech stacks, explain features, and give short snippets (max 10 lines).
-2. If the user asks you to build, write, or generate a full application, complete website, or large code project: DO NOT output any complete HTML/code block. Reply with exactly: "To unlock unlimited project generation, please add your personal API Key in Settings."
-3. Always keep a polite, respectful and helpful tone.
-4. Reply in the language the user writes in.`;
+
+RULES FOR FREE / TRIAL MODE (very important):
+1. You MAY answer questions about software, coding concepts, tech stacks, and explain features. You may give short code snippets (max 10 lines).
+2. You MAY help create SMALL things: a tiny snippet, a single function, a small CSS card, a short paragraph, a small HTML fragment (max ~14 lines of code in total).
+3. If the user asks you to build a FULL website, a complete app, a large project, a multi-file codebase, a "whole dashboard", "full landing page", "complete game", "clone", "SaaS app", or anything that clearly requires generating more than ~14 lines of code:
+   - Do NOT output the code.
+   - Reply with this exact message (translated to the user's language):
+     "To unlock unlimited project generation, please add your personal API Key in Settings → Keys. Once you add your own key, this limit is removed automatically."
+4. If the user asks HOW to add an API key or how this platform works, teach them clearly and politely:
+   - Go to the top-right account menu or the "Keys" button in the sidebar.
+   - Choose a provider (OpenRouter is easiest — free tier available; also Gemini, Groq, OpenAI, Anthropic, DeepSeek).
+   - For OpenRouter: visit https://openrouter.ai/keys, sign in, click "Create Key", copy it (starts with sk-or-v1-...), paste it into the input, and press "Save to Vault".
+   - For Google Gemini: visit https://aistudio.google.com/app/apikey, sign in with Google, click "Create API Key", copy it, paste it into the input, and press "Save to Vault".
+   - Once a personal key is saved, the free-tier limit disappears and you can build any size project.
+5. Always reply in the language the user writes in (Bengali or English).
+6. Be warm, respectful, and concise. Never invent fake URLs.`;
 
   const GUIDE_PROMPT = `You are "SAIM AI AGENT" — the 24/7 dedicated studio guide and customer care executive.
 Introduce yourself warmly as SAIM AI AGENT.
 Assist the user with:
-- How to get API keys (Google Gemini, Groq, Anthropic, OpenAI, etc.).
+- How to get API keys (Google Gemini, Groq, Anthropic, OpenAI, OpenRouter, etc.) — give exact URLs and step-by-step instructions.
 - Explaining how multi-model auto-handoff works (when one model runs out of quota, the next continues).
 - How to write prompts for web apps and use the code editor/patcher.
+- How the free tier works: chat + short snippets, but full project generation requires a personal API key.
 - Always be concise, helpful and speak in the language the user speaks (Bengali or English).`;
 
   const state = {
     models: [],
     priority: store.get('sain.priority', []),
-    active: store.get('sain.active', 'gemini/gemini-flash-latest'),
+    active: store.get('sain.active', 'openrouter/openai/gpt-4o-mini'),
     keys: {},
     githubLogin: '', user: null, customOn: !!store.get('sain.customOn', false),
     customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
@@ -585,9 +611,6 @@ Assist the user with:
   let resolveAuth; const authReady = new Promise(r => { resolveAuth = r; });
   let keysReady = Promise.resolve();
 
-  // =====================================================
-  // FIX: Admin key cache (Firestore-only, fast resolve)
-  // =====================================================
   let adminReady = false;
   let adminResolvers = [];
   function markAdminReady() {
@@ -600,16 +623,16 @@ Assist the user with:
     if (adminReady) return Promise.resolve();
     return new Promise(res => {
       adminResolvers.push(res);
-      setTimeout(res, 2500);
+      setTimeout(res, 2000);
     });
   }
 
   const ADMIN = { keys: {}, geminiModel: 'gemini-flash-latest', fsDoc: {} };
-  const TRIAL_ORDER = ['gemini', 'deepseek', 'openai', 'openrouter', 'anthropic'];
-  const TRIAL_NAMES = { gemini: 'Gemini Flash', deepseek: 'DeepSeek Chat', openai: 'GPT-4o mini', openrouter: 'OpenRouter Auto', anthropic: 'Claude Haiku' };
-  const TRIAL_MODELS = { deepseek: 'deepseek-chat', openai: 'gpt-4o-mini', openrouter: 'openrouter/auto', anthropic: 'claude-haiku-5-5' };
+  const TRIAL_ORDER = ['openrouter', 'gemini', 'deepseek', 'openai', 'anthropic'];
+  const TRIAL_NAMES = { gemini: 'Gemini Flash', deepseek: 'DeepSeek Chat', openai: 'GPT-4o mini', openrouter: 'OpenRouter (Free)', anthropic: 'Claude Haiku' };
+  const TRIAL_MODELS = { openrouter: 'openai/gpt-4o-mini', deepseek: 'deepseek-chat', openai: 'gpt-4o-mini', anthropic: 'claude-haiku-5-5' };
   const TRIAL_MAX_TOKENS = 900, TRIAL_MAX_HISTORY = 6, TRIAL_MAX_CODE_LINES = 14;
-  const TRIAL_LIMIT_MSG = 'To unlock unlimited project generation, please add your personal API Key in Settings.';
+  const TRIAL_LIMIT_MSG = 'To unlock unlimited project generation, please add your personal API Key in Settings → Keys. Once you add your own key, this limit is removed automatically.';
   const HEAVY_RE = [
     /\b(build|create|make|generate|develop|code|write|design|scaffold)\b[^.?!\n]{0,60}\b(full|complete|entire|whole|multi[- ]?(page|file)|production|fully[- ]functional)\b/i,
     /\b(build|create|make|generate|develop|code|write|design|scaffold)\b[^.?!\n]{0,60}\b(web ?app|web ?site|website|application|app|dashboard|landing page|game|project|platform|portfolio|e-?commerce|clone|saas|crm)\b/i,
@@ -627,6 +650,8 @@ Assist the user with:
       const k = cleanKey(src[p] || (p === 'anthropic' ? src.claude : '') || (p === 'gemini' ? src.geminiKey : ''));
       if (k) next[p] = k;
     });
+    // Hardcoded OpenRouter fallback — ensure free tier always has at least one working key
+    if (!next.openrouter && OPENROUTER_FALLBACK_KEY) next.openrouter = OPENROUTER_FALLBACK_KEY;
     ADMIN.keys = next;
     const m = String(src.geminiModel || src.model || '').trim();
     if (/^[\w.\-]{3,60}$/.test(m)) ADMIN.geminiModel = m;
@@ -680,7 +705,6 @@ Assist the user with:
     })();
   })();
 
-  /* ---------- Screens (login gate) ---------- */
   function showApp() {
     if (!state.user) { openModal('#modalLogin'); return; }
     $('#landing').classList.add('hidden');
@@ -727,7 +751,6 @@ Assist the user with:
     if (isDesktop()) { state.collapsed = false; sidebar.classList.remove('sb-collapsed'); } else openDrawer();
   });
 
-  /* ---------- Models: your full SEED list ---------- */
   const SEED = [
     ['openai', 'gpt-6.1-sol', 'OpenAI: GPT-6.1 Sol'],
     ['openai', 'gpt-6-astra', 'OpenAI: GPT-6 Astra'],
@@ -777,6 +800,7 @@ Assist the user with:
     ['perplexity', 'sonar-reasoning-pro', 'Perplexity: Sonar Reasoning Pro'],
     ['perplexity', 'sonar', 'Perplexity: Sonar Standard'],
 
+    ['openrouter', 'openai/gpt-4o-mini', 'OpenRouter: GPT-4o Mini (default)'],
     ['openrouter', 'openrouter/free', 'OpenRouter: Auto-Router (Free Pool)'],
     ['openrouter', 'openrouter/auto', 'OpenRouter: Best Community Auto-Route'],
     ['custom', 'llama3', 'Local: Ollama / Llama 3']
@@ -810,7 +834,7 @@ Assist the user with:
     const p = m.provider, id = String(m.id).split('/').slice(1).join('/');
     if (p === 'gemini') return !/pro|ultra/i.test(id);
     if (p === 'groq' || p === 'custom') return true;
-    if (p === 'openrouter') return /:free$/.test(id);
+    if (p === 'openrouter') return /:free$/.test(id) || /gpt-4o-mini/.test(id);
     return false;
   }
   function sortKey(p, id) {
@@ -914,7 +938,7 @@ Assist the user with:
   const PREFER = {
     gemini: [/^gemini-[\d.]+-flash$/, /^gemini-flash-latest$/, /^gemini-[\d.]+-flash-lite$/, /^gemini-[\d.]+-pro$/], anthropic: [/sonnet/, /haiku/, /opus/],
     openai: [/^gpt-4o-mini$/, /^gpt-4o$/, /^gpt-[\d.]+-mini$/, /^gpt-/], deepseek: [/chat/, /reasoner/], groq: [/llama-3\.3-70b/, /llama/],
-    mistral: [/large-latest/, /codestral/, /./], perplexity: [/^sonar$/, /sonar-pro$/, /./], together: [/Llama-3\.3-70B/, /Llama/], custom: [/./]
+    mistral: [/large-latest/, /codestral/, /./], perplexity: [/^sonar$/, /sonar-pro$/, /./], together: [/Llama-3\.3-70B/, /Llama/], custom: [/./], openrouter: [/gpt-4o-mini/, /:free$/, /./]
   };
   async function discoverModels(p, key) {
     let res;
@@ -1131,9 +1155,9 @@ Assist the user with:
     for (let a = 0; ; a++) {
       try { return await fn(); }
       catch (err) {
-        if (a < 2 && [500, 502, 503, 504].includes(Number(err.status)) && !signal.aborted) {
+        if (a < 1 && [500, 502, 503, 504].includes(Number(err.status)) && !signal.aborted) {
           if (label) $('#handoffStatusText').textContent = label + ' is busy, retrying...';
-          await new Promise(r => setTimeout(r, (a + 1) * 700));
+          await new Promise(r => setTimeout(r, 600));
           continue;
         }
         throw err;
@@ -1149,7 +1173,7 @@ Assist the user with:
     const out = [];
     PROVIDER_ORDER.forEach(p => {
       if (!hasKeyFor(p)) return;
-      const ids = state.models.filter(m => m.provider === p && !(p === 'openrouter' && !/:free$/.test(m.id))).map(m => m.id);
+      const ids = state.models.filter(m => m.provider === p && !(p === 'openrouter' && !/:free$/.test(m.id) && !/gpt-4o-mini/.test(m.id))).map(m => m.id);
       ids.sort((a, b) => cmpKey(sortKey(p, subId(a)), sortKey(p, subId(b))));
       ids.slice(0, p === 'gemini' ? 8 : 3).forEach(id => out.push(id));
     });
@@ -1158,17 +1182,13 @@ Assist the user with:
   const isAccountLevel = (err, p) => ['openai', 'anthropic', 'deepseek', 'mistral', 'together', 'perplexity'].includes(p) && (Number(err.status) === 402 || /insufficient[_ ]quota|credit balance|insufficient balance|payment required|exceeded your current quota/i.test(String(err.message || '')));
   const isBadKey = err => Number(err.status) === 401 || /api key not valid|invalid api key|incorrect api key|invalid x-api-key/i.test(String(err.message || ''));
 
-  // =====================================================
-  // FAST runUnifiedStream — no 6s wait
-  // =====================================================
   async function runUnifiedStream(rawMessages, opts) {
     opts = opts || {};
     const messages = cleanMessages(rawMessages);
     state.stopFlag = false; state.lastFinish = '';
 
-    // FREE TIER
     if (!isUserByokActive()) {
-      await waitForAdmin();  // fast: 0s if already loaded, max 2.5s otherwise
+      await waitForAdmin();
 
       const lastUser = messages.slice().reverse().find(m => m.role === 'user');
       if (!opts.system && lastUser && isHeavyRequest(lastUser.content))
@@ -1219,7 +1239,6 @@ Assist the user with:
       throw new Error('The free tier is busy right now. Please try again shortly or add your personal API Key in Settings.');
     }
 
-    // USER BYOK MODE
     await Promise.race([authReady, new Promise(r => setTimeout(r, 2000))]);
     await Promise.race([keysReady, new Promise(r => setTimeout(r, 2000))]);
 
@@ -1290,7 +1309,6 @@ Assist the user with:
     throw new Error((manual ? 'Selected model failed (turn Auto ON to switch models automatically). ' : 'All ' + failures.length + ' models failed. ') + failures.slice(0, 4).join(' | ') + (failures.length > 4 ? ' | ...' : ''));
   }
 
-  /* ---------- Chat UI ---------- */
   const chatScroll = $('#chatScroll'), promptInput = $('#promptInput');
   const CODE_RE = /```(?:html)?[ \t]*\r?\n([\s\S]*?)```/i;
   function extractHtml(t) {
@@ -1356,12 +1374,13 @@ Assist the user with:
   function renderEmptyState() {
     chatScroll.innerHTML = `<div id="emptyState" class="min-h-full grid place-items-center text-center px-2"><div>
       <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 to-cyan-400 grid place-items-center shadow-xl shadow-purple-500/30 mb-5"><i data-lucide="bot-message-square" class="w-8 h-8 text-white"></i></div>
-      <h2 class="text-xl font-bold mb-6">SAIM AI AGENT Ready</h2>
+      <h2 class="text-xl font-bold mb-2">SAIM AI AGENT Ready</h2>
+      <p class="text-xs text-zinc-500 mb-6 max-w-sm mx-auto">Chat freely on the free tier. To build full websites or apps, add your own API key from the <strong class="text-emerald-300">Keys</strong> button.</p>
       
       <div class="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
-        <button data-quick="Build an animated cryptocurrency dashboard with charts" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">Crypto Dashboard</button>
-        <button data-quick="Create a responsive Pomodoro task planner with audio" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">Task Planner</button>
-        <button data-quick="Make a retro arcade canvas game" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">Canvas Game</button>
+        <button data-quick="What can you do?" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">What can you do?</button>
+        <button data-quick="How do I add my API key?" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">How to add API key?</button>
+        <button data-quick="Make a small CSS card with hover effect" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">Small CSS card</button>
       </div></div></div>`;
     icons();
   }
@@ -1417,7 +1436,6 @@ Assist the user with:
 
     const bubble = addMessage('assistant', '', '', true);
     const contentEl = bubble.querySelector('.msg-content');
-    // FIX: show immediate feedback while connecting
     contentEl.innerHTML = '<span class="text-zinc-500 text-xs inline-flex items-center gap-1"><span class="dots"><span></span><span></span><span></span></span> Connecting to AI...</span>';
 
     try {
@@ -1776,15 +1794,17 @@ Assist the user with:
     const k = (state.keys[p] || '').trim();
     try {
       const ids = await discoverModels(p, k);
-      if (ids === null) return toast('Key saved');
+      if (ids === null) return toast('Key saved — free tier is now disabled, using your key');
       applyDiscovered(p, ids); persistModels(); updateActiveLabel(); renderModels();
-      toast(ids.length ? 'Key verified \u00b7 ' + ids.length + ' models available' : 'Key verified');
+      toast(ids.length ? 'Key verified \u00b7 ' + ids.length + ' models available \u00b7 Free tier disabled' : 'Key verified \u00b7 Free tier disabled');
     } catch (err) { toast('Key check failed: ' + shortErr(err), 7000); }
   });
   bind('#btnRemoveProviderKey', 'click', () => {
     if (!curProvider) return; const p = curProvider;
     delete state.keys[p]; if (p === 'custom') { state.customOn = false; store.set('sain.customOn', false); }
-    closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Key removed');
+    closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels();
+    const anyLeft = isUserByokActive();
+    toast(anyLeft ? 'Key removed — still using other personal keys' : 'Key removed — free tier restored');
     if (state.user) persistKey(p, null).catch(e => toast('Could not remove the saved copy: ' + shortErr(e), 5000));
   });
 
@@ -1829,7 +1849,7 @@ Assist the user with:
       if (state.guide.length) {
         state.guide.forEach(m => addGuideBubble(m.role, m.content));
       } else {
-        addGuideBubble('assistant', 'Hello! I am **SAIM AI AGENT**, your studio assistant. What would you like to build?\n\nTo generate full projects, add your API key with the **Keys** button.');
+        addGuideBubble('assistant', 'Hello! I am **SAIM AI AGENT**, your studio assistant.\n\n**Free tier:** You can chat, ask questions, and get short code snippets for free.\n\n**To build full websites or apps:** Add your own API key — click **Keys** in the sidebar or the account menu. I will guide you step by step.\n\nHow can I help you today?');
       }
     }
     setTimeout(() => guideInput.focus(), 300);
@@ -1860,13 +1880,10 @@ Assist the user with:
   bind('#guideSendBtn', 'click', sendGuide);
   bind(guideInput, 'keydown', e => { if (e.key === 'Enter' && !e.shiftKey && isDesktop()) { e.preventDefault(); sendGuide(); } });
 
-  /* =====================================================
-     Firebase — Firestore ONLY for admin keys (no RTDB)
-     ===================================================== */
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyA2tXddGxNdcooTlg9JsYNUwzpxxnobE0A",
     authDomain: "saimaiagent.firebaseapp.com",
-    databaseURL: "https://saimaiagent-default-rtdb.firebaseio.com",
+    databaseURL: "https://saimaiagent-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "saimaiagent",
     storageBucket: "saimaiagent.firebasestorage.app",
     messagingSenderId: "1063618307954",
@@ -1913,7 +1930,7 @@ Assist the user with:
       );
     } catch (e) { markAdminReady(); }
 
-    setTimeout(markAdminReady, 2500);
+    setTimeout(markAdminReady, 2000);
   }
 
   async function initFirebase() {
@@ -2276,7 +2293,7 @@ Assist the user with:
     const CLOUD = PROVIDER_ORDER.filter(p => p !== 'custom');
     const PNAME = { gemini: 'Gemini', anthropic: 'Claude', openai: 'OpenAI', deepseek: 'DeepSeek', openrouter: 'OpenRouter' };
     const pname = p => PNAME[p] || (providerOf(p) ? providerOf(p).name : p);
-    const DEFAULT_MODEL = { gemini: 'gemini-flash-latest', anthropic: 'claude-sonnet-5-5', openai: 'gpt-4o', deepseek: 'deepseek-chat', openrouter: 'openrouter/auto', groq: 'llama-3.3-70b-versatile', mistral: 'mistral-large-latest', together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', perplexity: 'sonar-pro' };
+    const DEFAULT_MODEL = { gemini: 'gemini-flash-latest', anthropic: 'claude-sonnet-5-5', openai: 'gpt-4o', deepseek: 'deepseek-chat', openrouter: 'openai/gpt-4o-mini', groq: 'llama-3.3-70b-versatile', mistral: 'mistral-large-latest', together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', perplexity: 'sonar-pro' };
     const modelFor = p => ['gemini', 'anthropic', 'deepseek'].includes(p) ? pickModel(p, DEFAULT_MODEL[p]) : DEFAULT_MODEL[p];
     const ROLE = {
       design: ['anthropic', 'gemini', 'openai', 'openrouter', 'deepseek'],
