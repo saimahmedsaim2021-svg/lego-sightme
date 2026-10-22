@@ -1,83 +1,1688 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Lego Sight</title>
-    <!-- আধুনিক ইংলিশ ফন্ট (Poppins) -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SAIM AI AGENT — Autonomous AI Workspace</title>
+<link rel="icon" type="image/png" href="logo.png" />
+<meta name="theme-color" content="#07070d" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    fontFamily: { sans: ['Inter','ui-sans-serif','system-ui','sans-serif'], mono: ['JetBrains Mono','ui-monospace','monospace'] },
+    colors: { ink: { 950:'#07070d', 900:'#0b0b14', 850:'#0e0e1a', 800:'#121222', 700:'#19192e' } }
+  } } };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-        body {
-            /* প্রিমিয়াম ডার্ক মেটাল গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড */
-            background: radial-gradient(circle at center, #1e293b, #090d16);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+<style>
+  html, body { height: 100%; background: #07070d; color: #e7e7f0; font-family: Inter, system-ui, sans-serif; }
+  * { -webkit-tap-highlight-color: transparent; }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-thumb { background: #262640; border-radius: 8px; }
+  .noscroll { scrollbar-width: none; } .noscroll::-webkit-scrollbar { display: none; }
 
-        .container {
-            text-align: center;
-            padding: 20px;
-        }
+  .grad-text { background: linear-gradient(110deg,#a855f7,#22d3ee 40%,#ec4899 75%,#a855f7); background-size: 220% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 7s linear infinite; }
+  @keyframes shimmer { to { background-position: 220% center; } }
+  .blob { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .3; pointer-events: none; }
+  .glass { background: rgba(18,18,32,.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.07); }
+  .fade-in { animation: fadeIn .3s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .dots span { width: 5px; height: 5px; border-radius: 9999px; background: #c084fc; display: inline-block; margin: 0 1.5px; animation: bounce 1.2s infinite; }
+  .dots span:nth-child(2) { animation-delay: .15s; } .dots span:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%,60%,100% { transform: none; opacity: .4; } 30% { transform: translateY(-5px); opacity: 1; } }
+  .caret { border-right: 2px solid #22d3ee; padding-right: 2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { border-color: transparent; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-        /* আধুনিক গ্লোইং বাটন */
-        .lego-btn {
-            display: inline-block;
-            text-decoration: none;
-            color: #ffffff;
-            font-size: 1.35rem;
-            font-weight: 600;
-            padding: 18px 45px;
-            border-radius: 50px;
-            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
-            box-shadow: 0 10px 30px rgba(168, 85, 247, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            letter-spacing: 1px;
-            text-transform: capitalize;
-        }
+  /* Shared form / button / modal styles */
+  .inp { width: 100%; padding: .55rem .75rem; border-radius: .75rem; background: #121222; border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 12px; outline: none; transition: border-color .15s; }
+  .inp:focus { border-color: #a855f7; }
+  .ibtn { padding: .5rem; border-radius: .65rem; color: #a1a1aa; flex-shrink: 0; transition: background .15s, color .15s; }
+  .ibtn:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .pbtn { flex: 1; padding: .65rem; border-radius: .75rem; font-size: 12px; font-weight: 600; background: linear-gradient(90deg,#9333ea,#22d3ee); color: #fff; }
+  .pbtn:hover { filter: brightness(1.1); } .pbtn:disabled { opacity: .5; cursor: not-allowed; }
+  .sbtn { padding: .65rem 1rem; border-radius: .75rem; font-size: 12px; background: rgba(255,255,255,.06); color: #d4d4d8; }
+  .sbtn:hover { background: rgba(255,255,255,.12); }
+  .modal { position: fixed; inset: 0; z-index: 85; display: none; align-items: center; justify-content: center; padding: 1rem; }
+  .modal.open { display: flex; }
+  .modal > .bg { position: absolute; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(4px); }
+  .mbox { position: relative; width: 100%; max-width: 32rem; max-height: 92dvh; display: flex; flex-direction: column; border-radius: 1.5rem; background: #0b0b14; border: 1px solid rgba(255,255,255,.1); overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,.6); }
+  .mhead { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.05); flex-shrink: 0; }
+  .mbody { padding: 1.25rem; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: .85rem; }
+  .mfoot { padding: 1rem; border-top: 1px solid rgba(255,255,255,.05); display: flex; gap: .5rem; flex-shrink: 0; padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .lbl { display: block; font-size: 12px; font-weight: 500; color: #d4d4d8; margin-bottom: .25rem; }
+  .hint { font-size: 10.5px; color: #71717a; margin-top: .25rem; }
+  #modalKey { z-index: 90; }
+  @media (max-width: 639px) { .modal { align-items: flex-end; padding: 0; } .mbox { max-width: none; border-radius: 1.5rem 1.5rem 0 0; } }
 
-        /* মাউস নিলে সুন্দর হোভার এনিমেশন */
-        .lego-btn:hover {
-            transform: translateY(-4px) scale(1.04);
-            box-shadow: 0 18px 40px rgba(236, 72, 153, 0.55);
-            border-color: rgba(255, 255, 255, 0.6);
-        }
+  .pcard { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 12px 14px; border-radius: 14px; background: #0b0b14; border: 1px solid rgba(255,255,255,.06); transition: all .2s; }
+  .pcard:hover { background: #121222; border-color: rgba(168,85,247,.35); }
+  .pcard.has-key { border-color: rgba(52,211,153,.35); background: rgba(5,46,28,.28); }
+  .hitem { padding: 7px 9px; border-radius: 10px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #a1a1aa; border: 1px solid transparent; }
+  .hitem:hover { background: rgba(255,255,255,.05); color: #f4f4f5; }
+  .hitem.active { background: rgba(168,85,247,.12); color: #d8b4fe; border-color: rgba(168,85,247,.25); }
+  .hitem span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .lego-btn:active {
-            transform: translateY(2px) scale(0.98);
-        }
-
-        /* মোবাইল স্ক্রিনের জন্য নিখুঁত মাপ */
-        @media (max-width: 600px) {
-            .lego-btn {
-                font-size: 1.15rem;
-                padding: 16px 36px;
-                width: 80vw;
-                max-width: 270px;
-            }
-        }
-    </style>
+  [data-auth]:disabled { opacity: .6; cursor: wait; }
+  /* Layout fixes */
+  #app { padding-top: env(safe-area-inset-top); }
+  #sidebar { transition: transform .3s cubic-bezier(.22,.8,.3,1), width .3s ease; }
+  @media (min-width: 1024px) { #sidebar.sb-collapsed { width: 0; border-right-width: 0; } }
+  #chatScroll, #guideScroll { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .msg { overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap; }
+  #codeEditor { tab-size: 2; white-space: pre; overflow: auto; resize: none; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  #lineNums { white-space: pre; }
+  .fs { position: fixed !important; inset: 0 !important; z-index: 70 !important; width: 100% !important; max-width: none !important; display: flex !important; padding-top: env(safe-area-inset-top); background: #0b0b14; }
+  #assistantPanel { transform: translateX(110%); transition: transform .3s cubic-bezier(.22,.8,.3,1); }
+  #assistantPanel.open { transform: none; }
+  .streaming-cursor::after { content: '▋'; margin-left: 2px; animation: blink 0.8s infinite; color: #22d3ee; }
+  /* iOS zooms into inputs below 16px */
+  @media (max-width: 1023px) { .inp, #promptInput, #guideInput { font-size: 16px !important; } }
+</style>
 </head>
-<body>
 
-    <div class="container">
-        <!-- Lego Sight বাটন -->
-        <a href="https://lego-sight.vercel.app/" class="lego-btn">
-            Lego Sight
-        </a>
+<body class="overflow-x-hidden antialiased bg-ink-950 text-zinc-100">
+
+<!-- ================= LANDING ================= -->
+<div id="landing" class="hidden relative min-h-[100dvh] overflow-x-hidden flex flex-col">
+  <div class="blob w-[420px] h-[420px] bg-purple-600 -top-24 -left-24"></div>
+  <div class="blob w-[380px] h-[380px] bg-cyan-500 top-1/3 -right-24"></div>
+  <header class="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-8 py-5 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-2xl overflow-hidden glass grid place-items-center shrink-0">
+        <img src="logo.png" alt="" class="w-full h-full object-cover" onerror="this.remove()" />
+      </div>
+      <div class="min-w-0"><div class="font-extrabold text-lg leading-tight truncate">SAIM <span class="grad-text">AI AGENT</span></div><div class="text-[10px] text-zinc-500 font-mono">UNIVERSAL SUITE</div></div>
     </div>
+    <button data-action="launch" class="shrink-0 inline-flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl bg-white text-ink-950 hover:bg-zinc-200">Login / Sign Up <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button>
+  </header>
+  <section class="relative z-10 flex-1 max-w-4xl mx-auto px-4 sm:px-8 pt-8 sm:pt-16 pb-10 text-center">
+    <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1]">The Autonomous Studio for <span class="grad-text">Every AI Model.</span></h1>
+    <p class="mt-5 text-base sm:text-lg text-zinc-300 min-h-[1.75rem]"><span id="dynamicSubtitle" class="caret"></span></p>
+    <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <button data-action="launch" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-semibold bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 hover:brightness-110"><i data-lucide="rocket" class="w-4 h-4"></i> Get Started</button>
+    </div>
+    <div class="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+      <article class="glass rounded-3xl p-5"><i data-lucide="git-merge" class="w-5 h-5 text-purple-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">Auto-Handoff</h3><p class="text-xs text-zinc-400 leading-relaxed">Switches to the next model automatically when one fails.</p></article>
+      <article class="glass rounded-3xl p-5"><i data-lucide="cpu" class="w-5 h-5 text-cyan-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">All Providers</h3><p class="text-xs text-zinc-400 leading-relaxed">10 providers plus custom endpoints.</p></article>
+      <article class="glass rounded-3xl p-5"><i data-lucide="binary" class="w-5 h-5 text-emerald-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">Surgical Patcher</h3><p class="text-xs text-zinc-400 leading-relaxed">Edit specific lines without rewriting the file.</p></article>
+      <article class="glass rounded-3xl p-5"><i data-lucide="github" class="w-5 h-5 text-pink-300 mb-3"></i><h3 class="font-semibold text-sm mb-1">GitHub Push</h3><p class="text-xs text-zinc-400 leading-relaxed">Sign in and push your code to a repository.</p></article>
+    </div>
+  </section>
+  <footer class="relative z-10 border-t border-white/5 py-5 text-center text-xs text-zinc-500">&copy; <span id="year"></span> SAIM AI AGENT</footer>
+</div>
 
+<!-- ================= WORKSPACE ================= -->
+<div id="app" class="hidden h-[100dvh] flex-col bg-ink-950">
+
+  <header class="h-14 shrink-0 flex items-center gap-1.5 px-2 sm:px-4 border-b border-white/5 bg-ink-900 relative z-30">
+    <button id="btnSidebar" class="ibtn" aria-label="Menu"><i data-lucide="panel-left" class="w-4 h-4"></i></button>
+    <button data-action="home" class="flex items-center gap-2 shrink-0 rounded-xl hover:bg-white/5 px-1 py-1" aria-label="Home">
+      <span class="w-7 h-7 rounded-lg overflow-hidden glass grid place-items-center"><img src="logo.png" alt="" class="w-full h-full object-cover" onerror="this.remove()" /></span>
+      <span class="font-bold text-sm hidden sm:inline">SAIM <span class="grad-text">AGENT</span></span>
+    </button>
+    <div class="flex-1 min-w-0 flex justify-center">
+      <button id="btnActiveModel" class="flex items-center gap-2 min-w-0 max-w-full px-3 py-1.5 rounded-xl glass hover:bg-white/10 text-xs">
+        <i data-lucide="cpu" class="w-3.5 h-3.5 text-purple-400 shrink-0"></i>
+        <span id="activeModelLabel" class="truncate font-mono">SAIM AI AGENT · Trial Mode</span>
+        <i data-lucide="chevrons-up-down" class="w-3 h-3 text-zinc-500 shrink-0"></i>
+      </button>
+    </div>
+    <div class="relative shrink-0">
+      <button data-dd class="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-purple-500/15 text-purple-200 text-xs font-medium hover:bg-purple-500/25">
+        <i data-lucide="bot" class="w-3.5 h-3.5 text-purple-400"></i><span id="activeAgentLabel" class="hidden md:inline"></span><i data-lucide="chevron-down" class="w-3 h-3 text-zinc-400"></i>
+      </button>
+      <div id="agentDropdown" class="ddmenu hidden absolute right-0 mt-2 w-64 max-w-[calc(100vw-1rem)] rounded-2xl bg-ink-900 border border-white/10 shadow-2xl p-1.5 z-50 fade-in"></div>
+    </div>
+    <button data-action="guide" class="ibtn bg-pink-500/15 !text-pink-200 hover:!bg-pink-500/25 relative" aria-label="SAIM AI AGENT"><i data-lucide="sparkles" class="w-4 h-4"></i><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-pink-400 animate-ping"></span></button>
+    <div class="relative shrink-0">
+      <button data-dd class="flex items-center gap-1 p-1 rounded-xl glass hover:bg-white/10" aria-label="Account">
+        <span id="avatarBtn" class="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-purple-500 to-cyan-400 grid place-items-center text-white text-xs font-bold">U</span>
+      </button>
+      <div class="ddmenu hidden absolute right-0 mt-2 w-60 max-w-[calc(100vw-1rem)] rounded-2xl bg-ink-900 border border-white/10 shadow-2xl p-1.5 z-50 text-xs text-zinc-300 fade-in">
+        <div class="px-3 py-2 border-b border-white/5 mb-1"><div id="authBox"></div><div id="modeStatusBadge" class="text-[10px] text-amber-300 mt-1"></div></div>
+        <button data-open="#modalPatch" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 text-left"><i data-lucide="binary" class="w-3.5 h-3.5 text-cyan-400"></i> Surgical Code Patcher</button>
+        <button data-open="#modalGithub" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 text-left"><i data-lucide="github" class="w-3.5 h-3.5"></i> Push to GitHub</button>
+        <button data-action="settings" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 text-left"><i data-lucide="sliders" class="w-3.5 h-3.5 text-amber-400"></i> Advanced Settings</button>
+        <button data-action="keys" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 text-left"><i data-lucide="key" class="w-3.5 h-3.5 text-emerald-400"></i> All AI API Keys</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile top tabs (shown only below lg) -->
+  <nav id="mobileTabs" class="lg:hidden shrink-0 flex gap-1 p-1.5 border-b border-white/5 bg-ink-900">
+    <button data-mtab="chat" type="button"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> Chat</button>
+    <button data-mtab="code" type="button"><i data-lucide="code-2" class="w-3.5 h-3.5"></i> Code</button>
+    <button data-mtab="preview" type="button"><i data-lucide="play" class="w-3.5 h-3.5"></i> Preview</button>
+  </nav>
+
+  <div class="flex-1 min-h-0 flex relative">
+    <div id="drawerOverlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-[86vw] max-w-[340px] lg:w-72 lg:max-w-none shrink-0 -translate-x-full lg:translate-x-0 bg-ink-900 border-r border-white/5 flex flex-col overflow-hidden">
+      <div class="h-14 lg:hidden shrink-0 flex items-center justify-between px-4 border-b border-white/5">
+        <span class="font-semibold text-sm">SAIM Studio Menu</span>
+        <button id="btnCloseDrawer" class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-3 space-y-2 shrink-0">
+        <button id="btnNewChat" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-sm font-medium hover:brightness-110"><i data-lucide="plus" class="w-4 h-4"></i> New AI Session</button>
+        <div class="grid grid-cols-2 gap-2">
+          <button data-action="keys" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl glass hover:bg-white/10 text-xs"><i data-lucide="key" class="w-3.5 h-3.5 text-amber-300"></i> Keys (<span id="keyCount">0</span>)</button>
+          <button data-open="#modalPatch" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl glass hover:bg-white/10 text-xs"><i data-lucide="binary" class="w-3.5 h-3.5 text-cyan-300"></i> Patch</button>
+        </div>
+      </div>
+      <div class="px-3 pb-2 shrink-0">
+        <div class="flex items-center justify-between mb-1.5"><span class="text-[11px] font-semibold text-zinc-500">Saved Sessions</span><button id="btnClearAllChats" class="text-[10px] text-zinc-500 hover:text-red-400">Clear all</button></div>
+        <div id="chatHistoryList" class="space-y-0.5 max-h-32 overflow-y-auto pr-1"></div>
+      </div>
+      <div class="px-3 shrink-0">
+        <div class="flex p-1 rounded-xl bg-ink-800 text-xs">
+          <button data-tab="priority" class="model-tab flex-1 py-1.5 rounded-lg font-medium">Priority Chain</button>
+          <button data-tab="all" class="model-tab flex-1 py-1.5 rounded-lg font-medium">All Models</button>
+        </div>
+        <input id="modelSearch" type="search" placeholder="Filter models..." autocomplete="off" class="inp mt-2" />
+        <div class="flex items-center justify-between mt-2 mb-1 text-[11px] text-zinc-500"><span id="modelCount"></span><button id="btnSyncModels" class="inline-flex items-center gap-1 hover:text-purple-300"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Sync</button></div>
+      </div>
+      <div id="modelList" class="flex-1 min-h-0 overflow-y-auto px-3 pb-3 space-y-1.5"></div>
+      </aside>
+
+    <!-- Chat -->
+    <section id="chatPane" class="flex flex-col flex-1 min-w-0 min-h-0 lg:flex-none lg:w-[42%] lg:max-w-[560px] border-r border-white/5 bg-ink-950">
+      
+      <!-- Live Supervisor & Failover Timeline Ribbon -->
+      <div id="handoffStrip" class="hidden shrink-0 px-3.5 py-1.5 bg-purple-950/40 border-b border-purple-500/20 text-[11px] flex items-center justify-between text-purple-200">
+        <div class="flex items-center gap-1.5 truncate">
+          <i data-lucide="git-merge" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
+          <span id="handoffStatusText" class="truncate font-mono">Supervisor Active</span>
+        </div>
+        <span id="tokensIndicator" class="text-[10px] font-mono text-zinc-400 shrink-0">0 tok</span>
+      </div>
+
+      <div id="chatScroll" class="flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 py-5 space-y-5"></div>
+      <div class="shrink-0 p-3 border-t border-white/5 bg-ink-950" style="padding-bottom:max(.75rem,env(safe-area-inset-bottom))">
+        <div id="attachList" class="flex flex-wrap gap-2 mb-2 empty:hidden"></div>
+        <div class="glass rounded-2xl p-2.5 focus-within:border-purple-500/50">
+          <textarea id="promptInput" rows="1" placeholder="Instruct SAIM Agent... (e.g. Build a modern crypto dashboard with charts)" class="w-full resize-none bg-transparent px-2 py-1.5 text-sm placeholder-zinc-600 focus:outline-none max-h-40"></textarea>
+          <div class="flex items-center justify-between pt-2 gap-2">
+            <div class="flex flex-wrap items-center gap-0.5 min-w-0">
+              <input id="fileInput" type="file" class="hidden" multiple accept=".txt,.md,.js,.ts,.json,.html,.css,.py,.csv" />
+              <button id="btnUpload" class="ibtn" title="Attach file"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
+              <button id="btnClear" class="ibtn" title="Clear chat"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button data-open="#modalPatch" class="ibtn !text-cyan-400" title="Patch"><i data-lucide="binary" class="w-4 h-4"></i></button>
+              <button id="btnMic" type="button" class="ibtn" title="Dictate"><i data-lucide="mic" class="w-4 h-4"></i></button>
+              <button id="btnVoiceMode" type="button" class="ibtn" title="Voice conversation"><i data-lucide="audio-lines" class="w-4 h-4"></i></button>
+              <button id="btnSpeak" type="button" class="ibtn" title="Read replies aloud"><i data-lucide="volume-2" class="w-4 h-4"></i></button>
+              <button id="btnVoiceLang" type="button" class="text-[10px] font-mono px-1.5 py-1 rounded-lg text-zinc-400 hover:bg-white/10" title="Voice language">EN</button>
+              <span id="keyGuardChip" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 whitespace-nowrap cursor-pointer">Trial Mode · Add Keys</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="btnAbortStream" class="hidden px-2.5 py-1.5 rounded-xl bg-red-500/20 text-red-300 text-xs font-medium hover:bg-red-500/30">Stop</button>
+              <button id="btnSend" class="shrink-0 inline-flex items-center gap-2 pl-4 pr-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-sm font-medium hover:brightness-110 disabled:opacity-40">Generate <i data-lucide="send-horizontal" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Code / Preview -->
+    <section id="codePane" class="hidden lg:flex flex-col flex-1 min-w-0 min-h-0 bg-ink-900">
+      <div class="shrink-0 h-12 flex items-center gap-2 px-2 sm:px-3 border-b border-white/5 bg-ink-850 overflow-x-auto noscroll">
+        <div class="hidden lg:flex shrink-0 p-1 rounded-xl bg-ink-800 text-xs">
+          <button data-view="code" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium"><i data-lucide="code-2" class="w-3.5 h-3.5"></i> Code</button>
+          <button data-view="preview" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium"><i data-lucide="play" class="w-3.5 h-3.5"></i> Live Preview</button>
+        </div>
+        <span id="errBadge" class="hidden shrink-0 items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-300"><i data-lucide="alert-triangle" class="w-3 h-3"></i><span id="errCount">0</span></span>
+        <div class="ml-auto flex items-center gap-0.5 shrink-0">
+          <button id="btnUndo" class="ibtn" title="Undo"><i data-lucide="undo-2" class="w-4 h-4"></i></button>
+          <button id="btnRedo" class="ibtn" title="Redo"><i data-lucide="redo-2" class="w-4 h-4"></i></button>
+          <button id="btnRun" class="ibtn" title="Re-run"><i data-lucide="rotate-cw" class="w-4 h-4"></i></button>
+          <button id="btnCopy" class="ibtn" title="Copy"><i data-lucide="copy" class="w-4 h-4"></i></button>
+          <button id="btnDownload" class="ibtn" title="Download"><i data-lucide="download" class="w-4 h-4"></i></button>
+          <button data-open="#modalGithub" class="ibtn" title="GitHub"><i data-lucide="github" class="w-4 h-4"></i></button>
+          <button id="btnFullscreen" class="ibtn" title="Fullscreen"><i data-lucide="maximize-2" class="w-4 h-4"></i></button>
+          <button id="btnFix" class="ml-1 shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-pink-500/15 text-pink-200 hover:bg-pink-500/25"><i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i> Auto Fix</button>
+        </div>
+      </div>
+      <div class="flex-1 min-h-0 relative">
+        <div id="codeView" class="absolute inset-0 flex">
+          <div id="lineNums" class="shrink-0 w-11 py-3 text-right pr-2 text-[12px] leading-6 font-mono text-zinc-600 bg-ink-950/70 select-none overflow-hidden"></div>
+          <textarea id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off" class="flex-1 min-w-0 bg-ink-950 text-zinc-200 font-mono text-[12.5px] leading-6 p-3 focus:outline-none"></textarea>
+        </div>
+        <div id="previewView" class="absolute inset-0 hidden bg-white">
+          <iframe id="previewFrame" title="Live preview" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads"></iframe>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div id="modalLogin" class="modal"><div class="bg" data-close></div>
+  <div class="mbox fade-in sm:!max-w-sm">
+    <div class="blob w-48 h-48 bg-purple-600 -top-16 -left-16" style="opacity:.25"></div>
+    <div class="blob w-48 h-48 bg-cyan-500 -bottom-16 -right-16" style="opacity:.2"></div>
+    <button data-close class="ibtn absolute top-3 right-3 z-10" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <div class="relative px-6 pt-10 pb-8 text-center">
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 to-cyan-400 grid place-items-center shadow-xl shadow-purple-500/30 mb-5"><i data-lucide="sparkles" class="w-8 h-8 text-white"></i></div>
+      <h3 class="text-xl font-extrabold">Welcome to <span class="grad-text">SAIM AI AGENT</span></h3>
+      <p class="text-xs text-zinc-400 mt-1.5 mb-7">Login or sign up to continue</p>
+      <div class="space-y-3">
+        <button data-auth="google" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white text-zinc-900 text-sm font-semibold hover:bg-zinc-100 transition"><svg class="w-4 h-4" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> Continue with Google</button>
+        <div class="flex items-center gap-3 text-[10px] text-zinc-600"><span class="flex-1 h-px bg-white/10"></span>OR<span class="flex-1 h-px bg-white/10"></span></div>
+        <button data-auth="github" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[#24292f] border border-white/10 text-white text-sm font-semibold hover:bg-[#2f353c] transition"><i data-lucide="github" class="w-4 h-4"></i> Continue with GitHub</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalPatch" class="modal"><div class="bg" data-close></div>
+  <div class="mbox fade-in">
+    <div class="mhead"><h3 class="font-semibold text-base">Surgical Code Patch</h3><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="mbody">
+      <div><label class="lbl">Find:</label><textarea id="patchFind" rows="3" class="inp font-mono" placeholder="Exact code or text"></textarea></div>
+      <div><label class="lbl">Replace with:</label><textarea id="patchReplace" rows="3" class="inp font-mono" placeholder="New code or text"></textarea></div>
+    </div>
+    <div class="mfoot"><button id="btnApplyPatch" class="pbtn">Apply Patch</button></div>
+  </div>
+</div>
+
+<div id="modalGithub" class="modal"><div class="bg" data-close></div>
+  <div class="mbox fade-in">
+    <div class="mhead"><h3 class="font-semibold text-base">Push to GitHub</h3><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="mbody">
+      <div id="ghAccount" class="text-xs text-zinc-400"></div>
+      <div><label class="lbl">Repository</label><input id="ghRepo" type="text" class="inp font-mono" placeholder="my-app or owner/my-app" autocomplete="off" /></div>
+      <div><label class="lbl">File path</label><input id="ghPath" type="text" class="inp font-mono" value="index.html" autocomplete="off" /></div>
+      <div><label class="lbl">Commit message</label><input id="ghMsg" type="text" class="inp" placeholder="Update from SAIM AI AGENT" /></div>
+      <label class="flex items-center gap-2 text-xs text-zinc-300"><input id="ghPrivate" type="checkbox" class="accent-purple-500" checked /> Private repository</label>
+      <div id="githubResult" class="hidden p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 break-all"></div>
+    </div>
+    <div class="mfoot"><button id="btnPushGithub" class="pbtn">Push to GitHub</button></div>
+  </div>
+</div>
+
+<div id="modalSettings" class="modal"><div class="bg" data-close></div>
+  <div class="mbox fade-in">
+    <div class="mhead"><h3 class="font-semibold text-base">Workspace Settings</h3><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="mbody">
+      <div><div class="flex justify-between text-xs mb-1"><label class="font-medium text-zinc-300">Temperature</label><span id="tempValue" class="font-mono text-cyan-400">0.40</span></div><input id="settingTemp" type="range" min="0" max="1" step="0.05" class="w-full accent-cyan-400" /></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Max Output Tokens</label><input id="settingMaxTokens" type="number" step="256" class="inp font-mono" /></div>
+        <div><label class="lbl">Timeout (sec)</label><input id="settingTimeout" type="number" min="10" max="300" class="inp font-mono" /></div>
+      </div>
+      <div><label class="lbl">CORS Proxy URL (Optional)</label><input id="settingProxy" type="url" class="inp font-mono" placeholder="https://your-cors-proxy.example.com/" /></div>
+      <div><label class="lbl">Custom System Prompt</label><textarea id="settingSysPrompt" rows="2" class="inp" placeholder="e.g. Always use Tailwind v3 and produce modern clean UI"></textarea></div>
+    </div>
+    <div class="mfoot"><button id="btnResetSettings" class="sbtn">Defaults</button><button id="btnSaveSettings" class="pbtn">Save Settings</button></div>
+  </div>
+</div>
+
+<div id="modalProviders" class="modal"><div class="bg" data-close></div>
+  <div class="mbox fade-in">
+    <div class="mhead"><h3 class="font-semibold text-base">AI Providers</h3><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div id="providersBody" class="mbody !gap-2"></div>
+    <div class="mfoot justify-end"><button data-close class="sbtn">Done</button></div>
+  </div>
+</div>
+
+<div id="modalKey" class="modal"><div class="bg" data-close></div>
+  <div class="mbox fade-in">
+    <div class="mhead"><div class="min-w-0"><h3 id="inputTitle" class="font-semibold text-sm truncate">Provider</h3><p id="inputSubtitle" class="text-[11px] text-zinc-500 truncate"></p></div><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="mbody">
+      <div id="customEndpointBox" class="hidden"><label class="lbl">Custom API Base URL:</label><input id="customEndpointInput" type="url" class="inp font-mono" placeholder="http://localhost:11434/v1" /></div>
+      <div class="relative"><input id="providerKeyInput" type="password" autocomplete="off" spellcheck="false" class="inp font-mono !pr-10" placeholder="Paste API key" /><button type="button" id="toggleKeyVisibility" class="ibtn absolute right-1 top-1/2 -translate-y-1/2 !p-1.5" aria-label="Show key"><i data-lucide="eye" class="w-3.5 h-3.5"></i></button></div>
+      <div id="providerKeyHelp" class="hint break-all"></div>
+    </div>
+    <div class="mfoot"><button id="btnRemoveProviderKey" class="sbtn !text-red-300">Remove</button><button id="btnSaveProviderKey" class="pbtn">Save to Vault</button></div>
+  </div>
+</div>
+
+<!-- ================= AI GUIDE / CUSTOMER CARE ================= -->
+<div id="assistantBackdrop" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"></div>
+<aside id="assistantPanel" class="fixed top-0 right-0 bottom-0 z-[61] w-full sm:w-[420px] flex flex-col bg-ink-900 border-l border-white/10 shadow-2xl" style="padding-top:env(safe-area-inset-top)">
+  <div class="h-14 shrink-0 flex items-center gap-2 px-4 border-b border-white/5">
+    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 grid place-items-center text-white"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
+    <div class="min-w-0 flex-1">
+      <div class="font-bold text-sm leading-tight text-white">SAIM AI AGENT</div>
+      <div class="text-[10px] text-emerald-400 font-mono">● Online</div>
+    </div>
+    <button id="guideClearBtn" class="ibtn" title="Reset chat" aria-label="Reset"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+    <button id="guideCloseBtn" class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
+  </div>
+  <div id="guideScroll" class="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3"></div>
+  <div class="shrink-0 p-3 border-t border-white/5 bg-ink-950/80" style="padding-bottom:max(.75rem,env(safe-area-inset-bottom))">
+    <div class="glass rounded-2xl p-2 focus-within:border-pink-500/50">
+      <textarea id="guideInput" rows="1" placeholder="Ask SAIM AI AGENT anything..." class="w-full resize-none bg-transparent px-2 py-1.5 text-sm placeholder-zinc-500 focus:outline-none max-h-32"></textarea>
+      <div class="flex items-center justify-between pt-1">
+        <span></span>
+        <button id="guideSendBtn" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 text-xs font-semibold hover:brightness-125 border border-pink-500/30">Send</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-[95] pointer-events-none opacity-0 translate-y-3 transition-all duration-300 px-4 py-2 rounded-xl glass text-xs font-medium shadow-2xl max-w-[90vw] text-center"></div>
+
+<!-- ================= JAVASCRIPT LOGIC ================= -->
+<script>
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const icons = () => { try { lucide.createIcons(); } catch (e) {} };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const isDesktop = () => matchMedia('(min-width:1024px)').matches;
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const bind = (sel, ev, fn) => { const el = typeof sel === 'string' ? $(sel) : sel; if (el) el.addEventListener(ev, fn); return el; };
+  const delegate = (sel, ev, fn) => document.addEventListener(ev, e => { const t = e.target.closest(sel); if (t) fn(e, t); });
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+
+  let toastTimer;
+  function toast(msg, ms) {
+    const t = $('#toast'); if (!t) return;
+    t.innerHTML = msg;
+    t.classList.remove('opacity-0', 'translate-y-3');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-3'), ms || 2500);
+  }
+
+  const ErrorKind = {
+    RATE_LIMIT: 'RATE_LIMIT',
+    QUOTA_EXHAUSTED: 'QUOTA_EXHAUSTED',
+    CONTEXT_TOO_LONG: 'CONTEXT_TOO_LONG',
+    OUTPUT_TRUNCATED: 'OUTPUT_TRUNCATED',
+    AUTH: 'AUTH',
+    CORS: 'CORS',
+    NETWORK: 'NETWORK',
+    TIMEOUT: 'TIMEOUT',
+    BAD_OUTPUT: 'BAD_OUTPUT',
+    UNKNOWN: 'UNKNOWN'
+  };
+
+  function classifyError(err, status) {
+    if (err && err.name === 'AbortError') return ErrorKind.TIMEOUT;
+    const msg = (err?.message || '').toLowerCase();
+    status = Number(status || err?.status || 0);
+    if (msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('cors')) return ErrorKind.CORS;
+    if (status === 401 || status === 403 || msg.includes('api key') || msg.includes('unauthorized')) return ErrorKind.AUTH;
+    if (status === 429 || msg.includes('rate limit') || msg.includes('too many requests')) {
+      if (msg.includes('quota') || msg.includes('billing') || msg.includes('credit')) return ErrorKind.QUOTA_EXHAUSTED;
+      return ErrorKind.RATE_LIMIT;
+    }
+    if (status === 400 && (msg.includes('context') || msg.includes('token count') || msg.includes('too large'))) return ErrorKind.CONTEXT_TOO_LONG;
+    if (status === 408 || status === 504 || msg.includes('timeout')) return ErrorKind.TIMEOUT;
+    if (status >= 500) return ErrorKind.NETWORK;
+    return ErrorKind.UNKNOWN;
+  }
+
+  const PROVIDERS = [
+    { id: 'gemini', name: 'Google Gemini', icon: 'gem', color: 'text-sky-300', bg: 'bg-sky-500/10', hint: 'AIzaSy...', docs: 'https://aistudio.google.com/app/apikey', desc: 'Gemini 2.5 Flash & Pro' },
+    { id: 'anthropic', name: 'Anthropic Claude', icon: 'brain', color: 'text-orange-300', bg: 'bg-orange-500/10', hint: 'sk-ant-...', docs: 'https://console.anthropic.com/settings/keys', desc: 'Claude Sonnet, Haiku & Opus' },
+    { id: 'openai', name: 'OpenAI (ChatGPT)', icon: 'sparkles', color: 'text-emerald-300', bg: 'bg-emerald-500/10', hint: 'sk-...', docs: 'https://platform.openai.com/api-keys', desc: 'GPT-4o & mini models' },
+    { id: 'deepseek', name: 'DeepSeek', icon: 'waves', color: 'text-blue-300', bg: 'bg-blue-500/10', hint: 'sk-...', docs: 'https://platform.deepseek.com/api_keys', desc: 'DeepSeek V3 & R1' },
+    { id: 'groq', name: 'Groq Cloud', icon: 'zap', color: 'text-amber-300', bg: 'bg-amber-500/10', hint: 'gsk_...', docs: 'https://console.groq.com/keys', desc: 'Ultra-fast Llama 3.3' },
+    { id: 'openrouter', name: 'OpenRouter', icon: 'network', color: 'text-purple-300', bg: 'bg-purple-500/10', hint: 'sk-or-v1-...', docs: 'https://openrouter.ai/keys', desc: 'One key, hundreds of models' },
+    { id: 'mistral', name: 'Mistral AI', icon: 'flame', color: 'text-yellow-300', bg: 'bg-yellow-500/10', hint: 'API key', docs: 'https://console.mistral.ai/api-keys', desc: 'Mistral Large & Codestral' },
+    { id: 'perplexity', name: 'Perplexity AI', icon: 'search', color: 'text-teal-300', bg: 'bg-teal-500/10', hint: 'pplx-...', docs: 'https://www.perplexity.ai/settings/api', desc: 'Sonar web-grounded models' },
+    { id: 'together', name: 'Together AI', icon: 'share-2', color: 'text-indigo-300', bg: 'bg-indigo-500/10', hint: 'API key', docs: 'https://api.together.ai/settings/api-keys', desc: 'Open-weight endpoints' },
+    { id: 'custom', name: 'Custom / Ollama', icon: 'server', color: 'text-cyan-300', bg: 'bg-cyan-500/10', hint: 'Optional key', docs: 'http://localhost:11434', desc: 'Any OpenAI-compatible server' }
+  ];
+  const PROVIDER_ORDER = PROVIDERS.map(p => p.id);
+  const providerOf = id => PROVIDERS.find(p => p.id === id);
+
+  const AGENTS = {
+    coder: { name: 'Full-Stack Coder', sub: 'Autonomous HTML/JS app builder', icon: 'code', color: 'text-cyan-400',
+      prompt: 'You are SAIM Coder, an autonomous senior full-stack engineer.\nProduce ONE complete, self-contained, working index.html with: HTML5 doctype, responsive viewport meta, inline CSS, Tailwind via https://cdn.tailwindcss.com, inline vanilla JavaScript. No placeholders; make it fully functional and mobile-friendly.\nOutput exactly ONE fenced ```html code block.' },
+    designer: { name: 'UI/UX Designer', sub: 'Aesthetics, Tailwind, glass effects', icon: 'palette', color: 'text-pink-400',
+      prompt: 'You are SAIM Designer, an elite visual designer. Focus on dark neon palettes, Tailwind gradients, glassmorphism, micro-interactions, responsive spacing and clean typography. Output ONE complete index.html in a single ```html code block.' },
+    debugger: { name: 'Bug Auditor', sub: 'Syntax review & error patching', icon: 'shield-alert', color: 'text-emerald-400',
+      prompt: 'You are SAIM Auditor. Inspect code for JavaScript bugs, race conditions, CSS overflow flaws and missing attributes. Return the robust complete single-file code in one ```html block, then a brief "Fixes Applied" list.' },
+    architect: { name: 'System Architect', sub: 'State machines & clean structure', icon: 'layers', color: 'text-amber-400',
+      prompt: 'You are SAIM Architect. Focus on modular structure, clean single-page state machines and separation of concerns. Output one complete index.html in ```html.' }
+  };
+  const FIX_PROMPT = 'You are SAIM Code Debugger. Fix syntax errors, unclosed tags, unbalanced CSS braces, broken handlers and runtime exceptions.\nReply with the COMPLETE corrected file in ONE ```html code block, then short bullets under "Changes:".';
+
+  // Dedicated Gatekeeper Prompt for Owner Trial Mode
+  const OWNER_TRIAL_PROMPT = `You are "SAIM AI AGENT", the customer support and AI specialist of SAIM Studio.
+Greet the user warmly and ask how you can help.
+RULES FOR TRIAL MODE:
+1. You may answer questions about software, advise on tech stacks, explain features, and give short snippets (max 10 lines).
+2. If the user asks you to build, write, or generate a full application, complete website, or large code project: DO NOT output any complete HTML/code block. Politely explain that building full projects, running live previews and using the multi-model engine requires their own API key, and ask them to add a Gemini, Claude, OpenAI, Groq or DeepSeek key with the Keys button.
+3. Always keep a polite, respectful and helpful tone.
+4. Reply in the language the user writes in.`;
+
+  const GUIDE_PROMPT = `You are "SAIM AI AGENT" — the 24/7 dedicated studio guide and customer care executive.
+Introduce yourself warmly as SAIM AI AGENT.
+Assist the user with:
+- How to get API keys (Google Gemini, Groq, Anthropic, OpenAI, etc.).
+- Explaining how multi-model auto-handoff works (when one model runs out of quota, the next continues).
+- How to write prompts for web apps and use the code editor/patcher.
+- Always be concise, helpful and speak in the language the user speaks (Bengali or English).`;
+
+  const state = {
+    models: [],
+    priority: store.get('sain.priority', ['gemini/gemini-2.5-flash', 'anthropic/claude-sonnet-5-5', 'groq/llama-3.3-70b-versatile', 'deepseek/deepseek-chat', 'openai/gpt-4o-mini']),
+    active: store.get('sain.active', 'gemini/gemini-2.5-flash'),
+    keys: store.get('sain.keys', {}),
+    ownerGeminiKey: '', ownerModel: 'gemini-2.5-flash', githubLogin: '', user: null,
+    customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
+    githubToken: store.get('sain.githubToken', ''),
+    agent: store.get('sain.agent', 'coder'),
+    settings: Object.assign({ systemPrompt: '', temperature: 0.4, maxTokens: 8192, timeoutSec: 90, corsProxy: '' }, store.get('sain.settings', {})),
+    tab: 'priority', search: '', messages: [], attachments: [], busy: false,
+    code: '', view: 'code', pane: 'chat', errors: [], collapsed: false,
+    chats: store.get('sain.chats', []), currentChatId: null,
+    fbRef: null, codeHistory: [], redoStack: [],
+    guide: store.get('sain.guide', []),
+    activeAbort: null
+  };
+  let resolveOwner; const ownerReady = new Promise(r => { resolveOwner = r; });
+  const modelById = id => state.models.find(m => m.id === id);
+
+  // Checks if the USER has provided any of their own keys (BYOK)
+  const isUserByokActive = () => PROVIDER_ORDER.some(p => p !== 'custom' && typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
+  const hasKeyFor = p => p === 'custom' ? true : (typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
+  const getEffectiveOwnerKey = () => (state.ownerGeminiKey || '').trim();
+
+  function updateActiveLabel() {
+    const el = $('#activeModelLabel');
+    const badge = $('#modeStatusBadge');
+    const guardChip = $('#keyGuardChip');
+    const keyCountEl = $('#keyCount');
+    const userKeysCount = PROVIDERS.filter(p => hasKeyFor(p.id) && p.id !== 'custom').length;
+    
+    keyCountEl.textContent = userKeysCount;
+
+    if (isUserByokActive()) {
+      const m = modelById(state.active);
+      el.textContent = m ? m.name : 'BYOK Active';
+      el.style.color = '#34d399';
+      badge.textContent = `● BYOK Mode (${userKeysCount} Keys)`;
+      badge.className = 'text-[10px] text-emerald-400 mt-0.5';
+      guardChip.classList.add('hidden');
+    } else {
+      el.textContent = 'SAIM AI AGENT · Trial Mode';
+      el.style.color = '#fbbf24';
+      badge.textContent = '● Free Trial';
+      badge.className = 'text-[10px] text-amber-300 mt-0.5';
+      guardChip.classList.remove('hidden');
+      guardChip.textContent = 'Trial Mode · Add Keys';
+    }
+  }
+
+  /* ---------- Landing subtitle ---------- */
+  (function () {
+    const phrases = ['Multi-Model Auto-Handoff: Zero Broken Code.', 'Universal BYOK: Gemini, Claude, OpenAI, Groq & Local.', 'Surgical Patch Engine: Edit single lines in seconds.', 'Sign in with GitHub and push straight to a repository.'];
+    const el = $('#dynamicSubtitle'); let p = 0, c = 0, del = false;
+    $('#year').textContent = new Date().getFullYear();
+    (function tick() {
+      const full = phrases[p]; c += del ? -1 : 1; el.textContent = full.slice(0, c);
+      let d = del ? 22 : 45;
+      if (!del && c === full.length) { del = true; d = 1800; } else if (del && c === 0) { del = false; p = (p + 1) % phrases.length; d = 300; }
+      setTimeout(tick, d);
+    })();
+  })();
+
+  /* ---------- Screens ---------- */
+  function showApp() {
+    if (!state.user) { openModal('#modalLogin'); return; }
+    $('#landing').classList.add('hidden');
+    const app = $('#app'); app.classList.remove('hidden'); app.classList.add('flex');
+    setPane(state.pane); icons();
+  }
+  function showLanding() {
+    $('#app').classList.add('hidden'); $('#app').classList.remove('flex');
+    $('#landing').classList.remove('hidden'); closeDrawer(); icons();
+  }
+
+  /* ---------- Dropdowns ---------- */
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-dd]');
+    $$('.ddmenu').forEach(m => { if (!t || m !== t.nextElementSibling) m.classList.add('hidden'); });
+    if (t && t.nextElementSibling) t.nextElementSibling.classList.toggle('hidden');
+  });
+
+  function renderAgentMenu() {
+    const box = $('#agentDropdown');
+    box.innerHTML = '<div class="text-[10px] font-semibold text-zinc-500 px-2.5 py-1">Select AI Agent</div>' +
+      Object.keys(AGENTS).map(k => { const a = AGENTS[k]; return `<button data-agent="${k}" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs hover:bg-white/10"><i data-lucide="${a.icon}" class="w-4 h-4 shrink-0 ${a.color}"></i><div class="min-w-0"><div class="font-medium text-zinc-200">${a.name}</div><div class="text-[10px] text-zinc-500">${a.sub}</div></div></button>`; }).join('');
+    icons();
+  }
+  function setAgent(key) {
+    if (!AGENTS[key]) return;
+    state.agent = key; store.set('sain.agent', key);
+    $('#activeAgentLabel').textContent = AGENTS[key].name;
+    toast('Agent: ' + AGENTS[key].name);
+    if (!state.messages.length) renderEmptyState();
+  }
+  delegate('[data-agent]', 'click', (e, t) => setAgent(t.dataset.agent));
+
+  /* ---------- Sidebar ---------- */
+  const sidebar = $('#sidebar'), overlay = $('#drawerOverlay');
+  const openDrawer = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); };
+  const closeDrawer = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
+  bind('#btnSidebar', 'click', () => {
+    if (isDesktop()) { state.collapsed = !state.collapsed; sidebar.classList.toggle('sb-collapsed', state.collapsed); }
+    else sidebar.classList.contains('-translate-x-full') ? openDrawer() : closeDrawer();
+  });
+  bind('#btnCloseDrawer', 'click', closeDrawer);
+  bind(overlay, 'click', closeDrawer);
+  bind('#btnActiveModel', 'click', () => {
+    state.tab = 'all'; renderModels();
+    if (isDesktop()) { state.collapsed = false; sidebar.classList.remove('sb-collapsed'); } else openDrawer();
+  });
+
+  /* ---------- Models ---------- */
+  const SEED = [
+    ['gemini', 'gemini-2.5-flash', 'Gemini 2.5 Flash'], ['gemini', 'gemini-2.5-pro', 'Gemini 2.5 Pro'],
+    ['anthropic', 'claude-sonnet-5-5', 'Claude Sonnet 5.5'], ['anthropic', 'claude-haiku-5-5', 'Claude Haiku 5.5'],
+    ['openai', 'gpt-4o', 'OpenAI GPT-4o'], ['openai', 'gpt-4o-mini', 'OpenAI GPT-4o Mini'],
+    ['deepseek', 'deepseek-chat', 'DeepSeek V3'], ['deepseek', 'deepseek-reasoner', 'DeepSeek R1'],
+    ['groq', 'llama-3.3-70b-versatile', 'Llama 3.3 70B (Groq)'], ['mistral', 'mistral-large-latest', 'Mistral Large'],
+    ['together', 'meta-llama/Llama-3.3-70B-Instruct-Turbo', 'Llama 3.3 70B (Together)'], ['perplexity', 'sonar', 'Perplexity Sonar'],
+    ['custom', 'llama3', 'Custom / Local Model']
+  ].map(([provider, id, name]) => ({ provider, id: provider + '/' + id, name }));
+
+  function setCatalog(list) {
+    const seen = new Set(), out = [];
+    list.forEach(m => { if (!seen.has(m.id)) { seen.add(m.id); out.push(m); } });
+    out.sort((a, b) => PROVIDER_ORDER.indexOf(a.provider) - PROVIDER_ORDER.indexOf(b.provider) || a.name.localeCompare(b.name));
+    state.models = out;
+  }
+  async function loadCatalogue() {
+    setCatalog(SEED); renderModels(); updateActiveLabel();
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/models');
+      if (!res.ok) return;
+      const data = await res.json();
+      setCatalog(SEED.concat((data.data || []).slice(0, 150).map(m => ({ provider: 'openrouter', id: 'openrouter/' + m.id, name: m.name || m.id }))));
+      renderModels(); updateActiveLabel();
+    } catch (e) {}
+  }
+  const persistModels = () => { store.set('sain.priority', state.priority); store.set('sain.active', state.active); };
+
+  function modelRow(m, ranked) {
+    const prov = providerOf(m.provider) || { icon: 'cpu', color: 'text-zinc-300', name: m.provider };
+    const idx = state.priority.indexOf(m.id), hasKey = hasKeyFor(m.provider);
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2 p-2 rounded-xl border cursor-pointer transition ' + (m.id === state.active ? 'bg-purple-500/15 border-purple-500/40' : 'bg-ink-800/60 border-transparent hover:border-white/10');
+    row.innerHTML = (ranked ? `<span class="w-4 text-center text-[10px] text-zinc-500 font-mono">${idx + 1}</span>` : '') +
+      `<div class="w-6 h-6 rounded-lg bg-white/5 grid place-items-center shrink-0"><i data-lucide="${prov.icon}" class="w-3.5 h-3.5 ${prov.color}"></i></div>` +
+      `<div class="min-w-0 flex-1"><div class="text-[12px] font-medium truncate">${esc(m.name)}</div><div class="text-[10px] truncate ${hasKey ? 'text-zinc-500' : 'text-amber-400'}">${esc(prov.name)}${hasKey ? '' : ' · key required'}</div></div><div class="flex items-center shrink-0"></div>`;
+    const actions = row.lastElementChild;
+    const mk = (icon, title, fn, cls) => {
+      const b = document.createElement('button'); b.type = 'button'; b.title = title;
+      b.className = 'p-1.5 rounded-lg hover:bg-white/10 text-zinc-500 hover:text-white ' + (cls || '');
+      b.innerHTML = `<i data-lucide="${icon}" class="w-3.5 h-3.5"></i>`;
+      b.addEventListener('click', e => { e.stopPropagation(); fn(); }); actions.appendChild(b);
+    };
+    if (ranked) { mk('chevron-up', 'Raise', () => movePriority(m.id, -1)); mk('chevron-down', 'Lower', () => movePriority(m.id, 1)); mk('x', 'Remove', () => togglePriority(m.id)); }
+    else mk('star', idx >= 0 ? 'Remove from chain' : 'Add to chain', () => togglePriority(m.id), idx >= 0 ? '!text-amber-300' : '');
+    row.addEventListener('click', () => { state.active = m.id; persistModels(); updateActiveLabel(); renderModels(); toast('Active: ' + m.name); if (!isDesktop()) closeDrawer(); });
+    return row;
+  }
+  function togglePriority(id) { const i = state.priority.indexOf(id); if (i >= 0) state.priority.splice(i, 1); else state.priority.push(id); persistModels(); renderModels(); }
+  function movePriority(id, dir) {
+    const i = state.priority.indexOf(id), j = i + dir;
+    if (i < 0 || j < 0 || j >= state.priority.length) return;
+    [state.priority[i], state.priority[j]] = [state.priority[j], state.priority[i]];
+    persistModels(); renderModels();
+  }
+  function renderModels() {
+    const list = $('#modelList'), q = state.search.trim().toLowerCase();
+    list.innerHTML = '';
+    $$('.model-tab').forEach(b => { b.className = 'model-tab flex-1 py-1.5 rounded-lg font-medium ' + (b.dataset.tab === state.tab ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'); });
+    const match = m => !q || m.id.toLowerCase().includes(q) || m.name.toLowerCase().includes(q);
+    if (state.tab === 'priority') {
+      const items = state.priority.map(id => modelById(id) || { id, name: id.split('/').pop(), provider: id.split('/')[0] }).filter(match);
+      $('#modelCount').textContent = items.length + ' in fallback chain';
+      items.forEach(m => list.appendChild(modelRow(m, true)));
+    } else {
+      const all = state.models.filter(match);
+      $('#modelCount').textContent = all.length + ' models';
+      all.slice(0, 80).forEach(m => list.appendChild(modelRow(m, false)));
+    }
+    icons();
+  }
+  $$('.model-tab').forEach(b => b.addEventListener('click', () => { state.tab = b.dataset.tab; renderModels(); }));
+  bind('#modelSearch', 'input', e => { state.search = e.target.value; if (state.search && state.tab === 'priority') state.tab = 'all'; renderModels(); });
+  bind('#btnSyncModels', 'click', async () => { toast('Refreshing models...'); await loadCatalogue(); await syncKeyedProviders(); toast('Models updated'); });
+
+  /* ---------- Key check + model discovery ---------- */
+  function shortErr(err) {
+    let m = String((err && err.message) || err || 'Unknown error');
+    const j = m.indexOf('{');
+    if (j >= 0) { try { const o = JSON.parse(m.slice(j)); const d = (o.error && (o.error.message || (typeof o.error === 'string' ? o.error : ''))) || o.message || ''; m = m.slice(0, j).trim() + ' ' + d; } catch (e) {} }
+    if (/failed to fetch|networkerror|load failed/i.test(m)) m = 'Request blocked (network or CORS). Check your connection or set a CORS proxy in Settings.';
+    return m.replace(/\s+/g, ' ').trim().slice(0, 220);
+  }
+  const MODEL_LIST = {
+    openai: 'https://api.openai.com/v1/models', deepseek: 'https://api.deepseek.com/models', groq: 'https://api.groq.com/openai/v1/models',
+    mistral: 'https://api.mistral.ai/v1/models', together: 'https://api.together.xyz/v1/models', openrouter: 'https://openrouter.ai/api/v1/auth/key'
+  };
+  const PREFER = {
+    gemini: [/^gemini-[\d.]+-flash$/, /^gemini-[\d.]+-pro$/, /flash/], anthropic: [/sonnet/, /haiku/, /opus/],
+    openai: [/^gpt-4o-mini$/, /^gpt-4o$/, /^gpt-[\d.]+-mini$/, /^gpt-/], deepseek: [/chat/, /reasoner/], groq: [/llama-3\.3-70b/, /llama/],
+    mistral: [/large-latest/, /codestral/, /./], together: [/Llama-3\.3-70B/, /Llama/], custom: [/./]
+  };
+  async function discoverModels(p, key) {
+    let res;
+    if (p === 'gemini') res = await fetch(applyProxy('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key)));
+    else if (p === 'anthropic') res = await fetch(applyProxy('https://api.anthropic.com/v1/models?limit=100'), { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' } });
+    else if (p === 'custom') res = await fetch(applyProxy((state.customEndpoint || '').replace(/\/+$/, '').replace(/\/chat\/completions$/, '') + '/models'), { headers: key ? { Authorization: 'Bearer ' + key } : {} });
+    else if (MODEL_LIST[p]) res = await fetch(applyProxy(MODEL_LIST[p]), { headers: { Authorization: 'Bearer ' + key } });
+    else return null;
+    if (!res.ok) { const e = new Error('HTTP ' + res.status + ': ' + (await res.text())); e.status = res.status; throw e; }
+    if (p === 'openrouter') return [];
+    const d = await res.json();
+    let ids;
+    if (p === 'gemini') ids = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace(/^models\//, ''));
+    else ids = (Array.isArray(d) ? d : (d.data || d.models || [])).filter(m => !m.type || m.type === 'chat').map(m => m.id || m.name).filter(Boolean);
+    return ids.filter(id => !/embed|moderation|whisper|tts|transcribe|image|dall|audio|realtime|rerank|guard|imagen|veo|live|aqa|gemma/i.test(id));
+  }
+  function pickModels(p, ids) {
+    const out = [];
+    (PREFER[p] || []).forEach(re => {
+      const hit = ids.filter(i => re.test(i)).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
+      if (hit && !out.includes(hit)) out.push(hit);
+    });
+    return out.slice(0, 2);
+  }
+  function applyDiscovered(p, ids) {
+    if (!ids || !ids.length) return;
+    const sub = id => id.split('/').slice(1).join('/');
+    setCatalog(state.models.filter(m => m.provider !== p).concat(ids.slice(0, 150).map(id => ({ provider: p, id: p + '/' + id, name: id }))));
+    state.priority = state.priority.filter(id => id.split('/')[0] !== p || ids.includes(sub(id)));
+    const picks = pickModels(p, ids).map(id => p + '/' + id);
+    if (!state.priority.some(id => id.split('/')[0] === p)) state.priority.push(...picks);
+    const ap = (state.active || '').split('/')[0];
+    if (!hasKeyFor(ap) || (ap === p && !ids.includes(sub(state.active)))) state.active = state.priority.find(id => id.split('/')[0] === p) || state.active;
+  }
+  async function syncKeyedProviders() {
+    await Promise.all(PROVIDER_ORDER.filter(p => p !== 'custom' && p !== 'openrouter' && hasKeyFor(p)).map(async p => {
+      try { applyDiscovered(p, await discoverModels(p, state.keys[p].trim())); } catch (e) {}
+    }));
+    persistModels(); renderModels(); updateActiveLabel();
+  }
+
+  /* ---------- Proxy URL Helper ---------- */
+  function applyProxy(url) {
+    const p = (state.settings.corsProxy || '').trim();
+    if (!p) return url;
+    if (p.includes('%s')) return p.replace('%s', encodeURIComponent(url));
+    return p.endsWith('/') || p.endsWith('?') ? p + url : p + '/' + url;
+  }
+
+  /* ---------- Streaming Provider Callers ---------- */
+  const ENDPOINTS = {
+    openrouter: 'https://openrouter.ai/api/v1/chat/completions', openai: 'https://api.openai.com/v1/chat/completions',
+    deepseek: 'https://api.deepseek.com/chat/completions', groq: 'https://api.groq.com/openai/v1/chat/completions',
+    mistral: 'https://api.mistral.ai/v1/chat/completions', together: 'https://api.together.xyz/v1/chat/completions',
+    perplexity: 'https://api.perplexity.ai/chat/completions'
+  };
+
+  const modelName = entry => entry.id.split('/').slice(1).join('/') || entry.id;
+
+  async function streamOpenAICompat(entry, messages, system, signal, onChunk) {
+    const key = (state.keys[entry.provider] || (entry.provider === 'custom' ? 'none' : '')).trim();
+    if (!key) throw new Error('Missing API key for ' + entry.name);
+    const headers = { 'Content-Type': 'application/json' };
+    if (key !== 'none') headers.Authorization = 'Bearer ' + key;
+    if (entry.provider === 'openrouter') { headers['HTTP-Referer'] = location.origin || 'https://sain.local'; headers['X-Title'] = 'SAIM AI AGENT'; }
+    let rawEndpoint = entry.provider === 'custom' ? (state.customEndpoint || 'http://localhost:11434/v1') : ENDPOINTS[entry.provider];
+    if (!/\/chat\/completions$/.test(rawEndpoint)) rawEndpoint = rawEndpoint.replace(/\/+$/, '') + '/chat/completions';
+    
+    const url = applyProxy(rawEndpoint);
+    const res = await fetch(url, {
+      method: 'POST', headers, signal,
+      body: JSON.stringify({
+        model: modelName(entry),
+        messages: [{ role: 'system', content: system }].concat(messages),
+        temperature: Number(state.settings.temperature),
+        max_tokens: Number(state.settings.maxTokens),
+        stream: true
+      })
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      const err = new Error(`HTTP ${res.status}: ${errText}`);
+      err.status = res.status;
+      throw err;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '', full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const dataStr = trimmed.slice(5).trim();
+        if (dataStr === '[DONE]') continue;
+        try {
+          const json = JSON.parse(dataStr);
+          const chunk = json.choices?.[0]?.delta?.content || '';
+          if (chunk) { full += chunk; onChunk(chunk, full); }
+        } catch (e) {}
+      }
+    }
+    return full;
+  }
+
+  async function streamGeminiWithKey(keyToUse, modelId, messages, system, signal, onChunk) {
+    if (!keyToUse) throw new Error('Missing Google Gemini API key');
+    const rawEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keyToUse)}`;
+    const url = applyProxy(rawEndpoint);
+    
+    const res = await fetch(url, {
+      method: 'POST', signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+        generationConfig: { temperature: Number(state.settings.temperature), maxOutputTokens: Number(state.settings.maxTokens) }
+      })
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      const err = new Error(`Gemini HTTP ${res.status}: ${errText}`);
+      err.status = res.status;
+      throw err;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '', full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const dataStr = trimmed.slice(5).trim();
+        try {
+          const json = JSON.parse(dataStr);
+          const parts = json.candidates?.[0]?.content?.parts || [];
+          const text = parts.map(p => p.text || '').join('');
+          if (text) { full += text; onChunk(text, full); }
+        } catch (e) {}
+      }
+    }
+    return full;
+  }
+
+  async function streamAnthropic(entry, messages, system, signal, onChunk) {
+    const key = (state.keys.anthropic || '').trim();
+    if (!key) throw new Error('Missing Anthropic API key');
+    const url = applyProxy('https://api.anthropic.com/v1/messages');
+    const res = await fetch(url, {
+      method: 'POST', signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: modelName(entry), system, messages,
+        max_tokens: Math.min(16000, Number(state.settings.maxTokens)),
+        temperature: Math.min(1, Math.max(0, Number(state.settings.temperature))),
+        stream: true
+      })
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      const err = new Error(`Claude HTTP ${res.status}: ${errText}`);
+      err.status = res.status;
+      throw err;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '', full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const dataStr = trimmed.slice(5).trim();
+        try {
+          const json = JSON.parse(dataStr);
+          if (json.type === 'content_block_delta') {
+            const chunk = json.delta?.text || '';
+            full += chunk; onChunk(chunk, full);
+          }
+        } catch (e) {}
+      }
+    }
+    return full;
+  }
+
+  function cleanMessages(msgs) {
+    const out = [];
+    msgs.forEach(m => {
+      if (m.error || !m.content) return;
+      const role = m.role === 'assistant' ? 'assistant' : 'user', last = out[out.length - 1];
+      if (last && last.role === role) last.content += '\n\n' + m.content; else out.push({ role, content: m.content });
+    });
+    while (out.length && out[0].role !== 'user') out.shift();
+    return out;
+  }
+
+  /* ---------- Unified Stream Runner (Owner Trial vs User BYOK) ---------- */
+  async function runUnifiedStream(rawMessages, opts) {
+    opts = opts || {};
+    const messages = cleanMessages(rawMessages);
+    const userActive = isUserByokActive();
+
+    // 1. OWNER TRIAL MODE (User has not entered any key)
+    if (!userActive) {
+      await Promise.race([ownerReady, new Promise(r => setTimeout(r, 6000))]);
+      const ownerKey = getEffectiveOwnerKey();
+      if (!ownerKey) throw new Error('SAIM AI AGENT is unavailable right now. Please try again later or add your own API key.');
+
+      $('#handoffStrip').classList.remove('hidden');
+      $('#handoffStatusText').textContent = 'SAIM AI AGENT (Trial / Support Mode)...';
+
+      const ctrl = new AbortController();
+      state.activeAbort = ctrl;
+      const timeoutMs = Math.max(10, Number(state.settings.timeoutSec) || 90) * 1000;
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+
+      try {
+        const system = opts.system || OWNER_TRIAL_PROMPT;
+        const text = await streamGeminiWithKey(ownerKey, state.ownerModel || 'gemini-2.5-flash', messages, system, ctrl.signal, (chunk, acc) => {
+          if (opts.onChunk) opts.onChunk(chunk, acc, { name: 'SAIM AI AGENT' });
+          $('#tokensIndicator').textContent = `~${Math.round(acc.length / 4)} tok`;
+        });
+        clearTimeout(timer);
+        $('#handoffStatusText').textContent = 'Completed (SAIM AI AGENT)';
+        setTimeout(() => $('#handoffStrip').classList.add('hidden'), 2500);
+        return { text, entry: { name: 'SAIM AI AGENT' }, isTrial: true };
+      } catch (err) {
+        clearTimeout(timer);
+        $('#handoffStrip').classList.add('hidden');
+        throw err;
+      }
+    }
+
+    // 2. USER BYOK MODE (User has provided their own keys)
+    const extra = (state.settings.systemPrompt || '').trim();
+    const system = opts.system || ((AGENTS[state.agent] || AGENTS.coder).prompt + (extra ? '\n\nCustom Instructions:\n' + extra : ''));
+    const ids = [state.active].concat(state.priority).filter((id, i, a) => id && a.indexOf(id) === i);
+    const chain = ids.map(id => modelById(id) || { id, name: id.split('/').pop(), provider: id.split('/')[0] });
+    const failures = [];
+    
+    let lastError = null;
+
+    $('#handoffStrip').classList.remove('hidden');
+
+    for (let i = 0; i < chain.length; i++) {
+      const entry = chain[i];
+      if (!hasKeyFor(entry.provider)) continue;
+
+      const ctrl = new AbortController();
+      state.activeAbort = ctrl;
+      const timeoutMs = Math.max(10, Number(state.settings.timeoutSec) || 90) * 1000;
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+
+      $('#handoffStatusText').textContent = `Supervisor: Streaming via ${entry.name}...`;
+
+
+      try {
+        let text = '';
+        if (entry.provider === 'gemini') {
+          text = await streamGeminiWithKey(state.keys.gemini.trim(), modelName(entry), messages, system, ctrl.signal, opts.onChunk);
+        } else if (entry.provider === 'anthropic') {
+          text = await streamAnthropic(entry, messages, system, ctrl.signal, opts.onChunk);
+        } else {
+          text = await streamOpenAICompat(entry, messages, system, ctrl.signal, opts.onChunk);
+        }
+
+        clearTimeout(timer);
+        $('#handoffStatusText').textContent = `Completed via ${entry.name}`;
+        setTimeout(() => $('#handoffStrip').classList.add('hidden'), 2500);
+        return { text, entry, isTrial: false };
+      } catch (err) {
+        clearTimeout(timer);
+        const kind = classifyError(err, err.status);
+        lastError = err.name === 'AbortError' ? new Error('Timed out') : err;
+        failures.push(entry.name + ': ' + shortErr(lastError));
+        const next = chain.slice(i + 1).find(c => hasKeyFor(c.provider));
+        if (next) {
+          const warn = `⚠️ ${entry.name} [${kind}] → Handing off to ${next.name}...`;
+          toast(warn, 3500);
+          $('#handoffStatusText').textContent = warn;
+        }
+      }
+    }
+    $('#handoffStrip').classList.add('hidden');
+    throw failures.length ? new Error('All models failed. ' + failures.join(' | ')) : new Error('No API key found for the selected models. Add a key in Keys.');
+  }
+
+  /* ---------- Chat UI ---------- */
+  const chatScroll = $('#chatScroll'), promptInput = $('#promptInput');
+  const CODE_RE = /```(?:html)?[ \t]*\r?\n([\s\S]*?)```/i;
+
+  function renderEmptyState() {
+    chatScroll.innerHTML = `<div id="emptyState" class="min-h-full grid place-items-center text-center px-2"><div>
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-purple-500 to-cyan-400 grid place-items-center shadow-xl shadow-purple-500/30 mb-5"><i data-lucide="bot-message-square" class="w-8 h-8 text-white"></i></div>
+      <h2 class="text-xl font-bold mb-6">SAIM AI AGENT Ready</h2>
+      
+      <div class="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
+        <button data-quick="Build an animated cryptocurrency dashboard with charts" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">Crypto Dashboard</button>
+        <button data-quick="Create a responsive Pomodoro task planner with audio" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">Task Planner</button>
+        <button data-quick="Make a retro arcade canvas game" class="text-xs px-3 py-1.5 rounded-full glass hover:bg-white/10 text-zinc-300">Canvas Game</button>
+      </div></div></div>`;
+    icons();
+  }
+  delegate('[data-quick]', 'click', (e, t) => { promptInput.value = t.dataset.quick; autoGrow(); promptInput.focus(); });
+
+  function fmt(text) {
+    return esc(text).replace(/```[\s\S]*?```/g, '<span class="block my-1 p-2 rounded-xl bg-ink-950 font-mono text-[11px] text-purple-300">Code generated → see Code / Preview tab</span>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`\n]+)`/g, '<code class="px-1 rounded bg-white/10 text-cyan-300">$1</code>');
+  }
+
+  function addMessage(role, text, meta, isStreaming) {
+    const es = $('#emptyState'); if (es) es.remove();
+    const wrap = document.createElement('div');
+    wrap.className = 'flex gap-2.5 fade-in ' + (role === 'user' ? 'justify-end' : '');
+    const bubble = document.createElement('div');
+    if (role === 'user') {
+      bubble.className = 'msg max-w-[88%] bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl rounded-br-md px-4 py-2.5 text-[13px] text-white leading-relaxed';
+      bubble.textContent = text; wrap.appendChild(bubble);
+    } else {
+      wrap.innerHTML = '<div class="w-7 h-7 shrink-0 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-400 grid place-items-center"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-white"></i></div>';
+      bubble.className = 'min-w-0 max-w-[92%] bg-white/5 border border-white/5 rounded-2xl rounded-tl-md px-4 py-2.5 text-[13px] text-zinc-200 leading-relaxed ' + (isStreaming ? 'streaming-cursor' : '');
+      bubble.innerHTML = '<div class="msg-content">' + fmt(text) + '</div>' + (meta ? `<div class="text-[10px] text-zinc-500 font-mono pt-1.5">${esc(meta)}</div>` : '');
+      wrap.appendChild(bubble);
+    }
+    chatScroll.appendChild(wrap); chatScroll.scrollTop = chatScroll.scrollHeight; icons();
+    return bubble;
+  }
+
+  function autoGrow() { promptInput.style.height = 'auto'; promptInput.style.height = Math.min(promptInput.scrollHeight, 160) + 'px'; }
+  bind(promptInput, 'input', autoGrow);
+  bind(promptInput, 'keydown', e => { if (e.key === 'Enter' && !e.shiftKey && isDesktop()) { e.preventDefault(); sendMessage(); } });
+  bind('#btnSend', 'click', () => sendMessage());
+  bind('#btnAbortStream', 'click', () => { if (state.activeAbort) { state.activeAbort.abort(); toast('Generation cancelled'); } });
+
+  async function sendMessage() {
+    if (state.busy) return;
+    stopListening(); stopSpeaking();
+    let text = promptInput.value.trim();
+    if (!text && !state.attachments.length) return;
+    if (!state.currentChatId) newChatSession();
+    if (state.attachments.length) text += '\n\n' + state.attachments.map(a => `[Attached: ${a.name}]\n\`\`\`\n${a.content.slice(0, 8000)}\n\`\`\``).join('\n');
+    promptInput.value = ''; autoGrow(); state.attachments = []; renderAttachments();
+    state.messages.push({ role: 'user', content: text }); addMessage('user', text); saveCurrentChat();
+    
+    state.busy = true;
+    $('#btnSend').disabled = true;
+    $('#btnAbortStream').classList.remove('hidden');
+
+    const bubble = addMessage('assistant', '', '', true);
+    const contentEl = bubble.querySelector('.msg-content');
+
+    try {
+      const res = await runUnifiedStream(state.messages, {
+        onChunk: (chunk, acc, entry) => {
+          contentEl.innerHTML = fmt(acc);
+          chatScroll.scrollTop = chatScroll.scrollHeight;
+        }
+      });
+      bubble.classList.remove('streaming-cursor');
+      const meta = res.isTrial ? 'SAIM AI AGENT (Trial Mode)' : ((AGENTS[state.agent] || AGENTS.coder).name + ' · ' + res.entry.name);
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'text-[10px] text-zinc-500 font-mono pt-1.5';
+      metaDiv.textContent = meta;
+      bubble.appendChild(metaDiv);
+
+      state.messages.push({ role: 'assistant', content: res.text, meta });
+      saveCurrentChat();
+      voiceAfterReply(res.text);
+
+      // Only update live preview and code editor if a real HTML block is returned (BYOK Mode)
+      const m = res.text.match(CODE_RE);
+      if (m && m[1]) {
+        setCode(m[1].trim(), true);
+        toast('Live preview updated');
+        if (!isDesktop()) setPane('preview');
+      }
+    } catch (err) {
+      bubble.classList.remove('streaming-cursor');
+      const msg = '⚠️ ' + err.message;
+      contentEl.innerHTML = `<span class="text-amber-400 font-medium">${esc(msg)}</span>`;
+      state.messages.push({ role: 'assistant', content: msg, error: true });
+      saveCurrentChat();
+      toast('Notice: ' + err.message, 3500);
+      if (voice.convo) { voice.convo = false; updateVoiceUI(); }
+    } finally {
+      state.busy = false;
+      state.activeAbort = null;
+      $('#btnSend').disabled = false;
+      $('#btnAbortStream').classList.add('hidden');
+    }
+  }
+
+  /* ---------- Sessions ---------- */
+  function persistChats() { store.set('sain.chats', state.chats.slice(0, 20)); }
+  function newChatSession() {
+    const chat = { id: uid(), title: 'New App Session', createdAt: Date.now(), messages: [] };
+    state.chats.unshift(chat); state.currentChatId = chat.id; state.messages = [];
+    persistChats(); renderChatHistory(); renderEmptyState();
+  }
+  function saveCurrentChat() {
+    const chat = state.chats.find(c => c.id === state.currentChatId);
+    if (!chat || !state.messages.length) return;
+    chat.messages = state.messages.slice();
+    const first = chat.messages.find(m => m.role === 'user');
+    if (first) chat.title = first.content.slice(0, 45);
+    persistChats(); renderChatHistory();
+  }
+  function renderChatHistory() {
+    const list = $('#chatHistoryList'); list.innerHTML = '';
+    state.chats.forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'hitem' + (c.id === state.currentChatId ? ' active' : '');
+      el.innerHTML = `<i data-lucide="message-square" class="w-3 h-3 shrink-0"></i><span>${esc(c.title || 'Session')}</span><button type="button" class="p-1 text-zinc-500 hover:text-red-400" aria-label="Delete"><i data-lucide="x" class="w-3 h-3"></i></button>`;
+      el.addEventListener('click', () => loadChat(c.id));
+      el.querySelector('button').addEventListener('click', e => { e.stopPropagation(); deleteChat(c.id); });
+      list.appendChild(el);
+    });
+    icons();
+  }
+  function loadChat(id) {
+    const chat = state.chats.find(c => c.id === id); if (!chat) return;
+    state.currentChatId = id; state.messages = chat.messages || []; chatScroll.innerHTML = '';
+    if (!state.messages.length) renderEmptyState(); else state.messages.forEach(m => addMessage(m.role, m.content, m.meta));
+    renderChatHistory(); if (!isDesktop()) { closeDrawer(); setPane('chat'); }
+  }
+  function deleteChat(id) {
+    state.chats = state.chats.filter(c => c.id !== id);
+    if (state.currentChatId === id) { state.currentChatId = null; state.messages = []; renderEmptyState(); }
+    persistChats(); renderChatHistory();
+  }
+  bind('#btnClearAllChats', 'click', () => { if (!confirm('Clear all sessions?')) return; state.chats = []; state.currentChatId = null; state.messages = []; persistChats(); renderChatHistory(); renderEmptyState(); });
+  bind('#btnNewChat', 'click', () => { newChatSession(); closeDrawer(); setPane('chat'); });
+  bind('#btnClear', 'click', () => { state.messages = []; saveCurrentChat(); const c = state.chats.find(x => x.id === state.currentChatId); if (c) c.messages = []; persistChats(); renderEmptyState(); toast('Chat cleared'); });
+
+  function renderAttachments() {
+    const box = $('#attachList'); box.innerHTML = '';
+    state.attachments.forEach((a, i) => {
+      const chip = document.createElement('div');
+      chip.className = 'inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-cyan-300 max-w-full';
+      chip.innerHTML = `<i data-lucide="file-code" class="w-3 h-3 shrink-0"></i><span class="truncate">${esc(a.name)}</span><button type="button" class="text-zinc-500 hover:text-white" aria-label="Remove"><i data-lucide="x" class="w-3 h-3"></i></button>`;
+      chip.querySelector('button').addEventListener('click', () => { state.attachments.splice(i, 1); renderAttachments(); });
+      box.appendChild(chip);
+    });
+    icons();
+  }
+  bind('#btnUpload', 'click', () => $('#fileInput').click());
+  bind('#fileInput', 'change', async e => {
+    for (const f of Array.from(e.target.files || [])) { if (f.size > 1024 * 1024) { toast(f.name + ' is over 1MB'); continue; } try { state.attachments.push({ name: f.name, content: await f.text() }); } catch (x) {} }
+    e.target.value = ''; renderAttachments();
+  });
+
+  /* ---------- Code editor & preview ---------- */
+  const editor = $('#codeEditor'), frame = $('#previewFrame'), codePane = $('#codePane');
+  const DEFAULT_CODE = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Preview</title>\n  <script src="https://cdn.tailwindcss.com"><\/script>\n</head>\n<body class="min-h-screen bg-[#07070d] text-white flex items-center justify-center p-6 text-center">\n  <div class="max-w-md p-8 rounded-3xl bg-white/5 border border-white/10 shadow-2xl">\n    <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">SAIM Studio Ready</h1>\n    <p class="text-zinc-400 text-sm">Send a prompt to SAIM AI AGENT. Add your API keys to unlock autonomous code generation.</p>\n  </div>\n</body>\n</html>';
+
+  function updateLineNums() {
+    const n = editor.value.split('\n').length; let s = '';
+    for (let i = 1; i <= n; i++) s += i + '\n';
+    const ln = $('#lineNums'); ln.textContent = s; ln.scrollTop = editor.scrollTop;
+  }
+  const errorHook = () => '<script>(function(){function r(m){try{parent.postMessage({__sain:1,message:String(m)},"*")}catch(e){}}window.addEventListener("error",function(e){r((e.message||"Error")+(e.lineno?" (line "+e.lineno+")":""))});window.addEventListener("unhandledrejection",function(e){r("Promise error: "+((e.reason&&e.reason.message)||e.reason))});var ce=console.error;console.error=function(){r([].slice.call(arguments).join(" "));ce.apply(console,arguments)};})();<\/script>';
+  function runPreview() {
+    state.errors = []; updateErrBadge();
+    let src = state.code || DEFAULT_CODE;
+    src = /<head[^>]*>/i.test(src) ? src.replace(/<head[^>]*>/i, m => m + errorHook()) : errorHook() + src;
+    frame.srcdoc = src;
+  }
+  function updateErrBadge() {
+    const b = $('#errBadge'), has = state.errors.length > 0;
+    b.classList.toggle('hidden', !has); b.classList.toggle('inline-flex', has);
+    $('#errCount').textContent = state.errors.length;
+  }
+  window.addEventListener('message', e => {
+    if (e.source !== frame.contentWindow || !e.data || !e.data.__sain) return;
+    state.errors.push(e.data.message); updateErrBadge();
+  });
+
+  function setCode(code, run, record) {
+    if (record !== false && state.code && state.code !== code) {
+      state.codeHistory.push(state.code); if (state.codeHistory.length > 25) state.codeHistory.shift(); state.redoStack = [];
+    }
+    state.code = code; editor.value = code; updateLineNums();
+    if (run) { runPreview(); setView('preview'); }
+    pushRemote();
+  }
+  function undoCode() { if (!state.codeHistory.length) return toast('Nothing to undo'); state.redoStack.push(state.code); setCode(state.codeHistory.pop(), true, false); }
+  function redoCode() { if (!state.redoStack.length) return toast('Nothing to redo'); state.codeHistory.push(state.code); setCode(state.redoStack.pop(), true, false); }
+  bind('#btnUndo', 'click', undoCode); bind('#btnRedo', 'click', redoCode);
+
+  let runTimer;
+  bind(editor, 'input', () => {
+    if (state.code !== editor.value) { state.codeHistory.push(state.code); if (state.codeHistory.length > 25) state.codeHistory.shift(); state.redoStack = []; }
+    state.code = editor.value; updateLineNums(); clearTimeout(runTimer); runTimer = setTimeout(() => { runPreview(); pushRemote(); }, 700);
+  });
+  bind(editor, 'scroll', () => { $('#lineNums').scrollTop = editor.scrollTop; });
+  bind(editor, 'keydown', e => {
+    if (e.key === 'Tab') { e.preventDefault(); editor.setRangeText('  ', editor.selectionStart, editor.selectionEnd, 'end'); editor.dispatchEvent(new Event('input')); }
+  });
+
+  function setView(v) {
+    state.view = v;
+    $('#codeView').classList.toggle('hidden', v !== 'code');
+    $('#previewView').classList.toggle('hidden', v !== 'preview');
+    $$('.view-tab').forEach(b => { b.className = 'view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium ' + (b.dataset.view === v ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'); });
+    if (v === 'preview' && !frame.srcdoc) runPreview();
+    updateMobileTabs();
+  }
+  $$('.view-tab').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  bind('#btnRun', 'click', () => { runPreview(); setView('preview'); });
+  bind('#btnCopy', 'click', async () => {
+    try { await navigator.clipboard.writeText(editor.value); } catch (e) { editor.select(); document.execCommand('copy'); }
+    toast('Code copied');
+  });
+  bind('#btnDownload', 'click', () => {
+    const url = URL.createObjectURL(new Blob([editor.value], { type: 'text/html' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000); toast('Downloaded index.html');
+  });
+  bind('#btnFullscreen', 'click', () => {
+    const on = codePane.classList.toggle('fs');
+    $('#btnFullscreen').innerHTML = `<i data-lucide="${on ? 'minimize-2' : 'maximize-2'}" class="w-4 h-4"></i>`; icons();
+  });
+
+  /* ---------- Mobile tabs / panes ---------- */
+  function updateMobileTabs() {
+    const active = state.pane === 'chat' ? 'chat' : state.view;
+    $$('[data-mtab]').forEach(b => {
+      b.className = 'flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition ' + (b.dataset.mtab === active ? 'bg-gradient-to-r from-purple-600/80 to-cyan-500/70 text-white' : 'text-zinc-400 hover:text-white hover:bg-white/5');
+    });
+  }
+  function setPane(p) {
+    state.pane = p;
+    const cp = $('#chatPane');
+    if (isDesktop()) {
+      cp.classList.remove('hidden'); cp.classList.add('flex');
+      codePane.classList.remove('hidden'); codePane.classList.add('flex');
+    } else {
+      const chat = p === 'chat';
+      cp.classList.toggle('hidden', !chat); cp.classList.toggle('flex', chat);
+      codePane.classList.toggle('hidden', chat); codePane.classList.toggle('flex', !chat);
+      if (!chat) setView(p === 'preview' ? 'preview' : 'code');
+      codePane.classList.remove('fs');
+    }
+    updateMobileTabs();
+  }
+  delegate('[data-mtab]', 'click', (e, t) => setPane(t.dataset.mtab));
+  let lastDesktop = isDesktop();
+  window.addEventListener('resize', () => { const d = isDesktop(); if (d !== lastDesktop) { lastDesktop = d; if (d) closeDrawer(); setPane(state.pane); } });
+
+  /* ---------- Patch ---------- */
+  bind('#btnApplyPatch', 'click', () => {
+    const f = $('#patchFind').value, r = $('#patchReplace').value;
+    if (!f) return toast('Enter the code to find');
+    if (!state.code.includes(f)) return toast('Target not found in current code', 3000);
+    const n = state.code.split(f).length - 1;
+    setCode(state.code.split(f).join(r), true); closeModal($('#modalPatch'));
+    $('#patchFind').value = ''; $('#patchReplace').value = '';
+    toast('Patched ' + n + ' place' + (n > 1 ? 's' : ''));
+    if (!isDesktop()) setPane('preview');
+  });
+
+  /* ---------- GitHub Push ---------- */
+  const ghFetch = (path, opts) => fetch('https://api.github.com' + path, Object.assign({ headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + state.githubToken, 'Content-Type': 'application/json' } }, opts));
+  const b64 = str => btoa(unescape(encodeURIComponent(str)));
+  async function ghCall(path, opts) {
+    const r = await ghFetch(path, opts);
+    if (r.status === 401) { state.githubToken = ''; state.githubLogin = ''; store.set('sain.githubToken', ''); throw new Error('GitHub session expired. Sign in again.'); }
+    return r;
+  }
+  async function ghRefresh() {
+    const acc = $('#ghAccount'), btn = $('#btnPushGithub');
+    $('#githubResult').classList.add('hidden');
+    if (!$('#ghRepo').value) $('#ghRepo').value = store.get('sain.ghRepo', '');
+    if (!state.githubToken) { acc.textContent = 'Not connected'; btn.textContent = 'Sign in with GitHub'; return; }
+    btn.textContent = 'Push to GitHub';
+    acc.textContent = state.githubLogin ? 'Connected as @' + state.githubLogin : 'Connected';
+    if (!state.githubLogin) {
+      try {
+        const r = await ghCall('/user');
+        if (r.ok) { state.githubLogin = (await r.json()).login; acc.textContent = 'Connected as @' + state.githubLogin; }
+      } catch (e) { acc.textContent = 'Not connected'; btn.textContent = 'Sign in with GitHub'; }
+    }
+  }
+  bind('#btnPushGithub', 'click', async () => {
+    const btn = $('#btnPushGithub');
+    if (!state.githubToken) { if (await signIn('github')) ghRefresh(); return; }
+    if (!state.code.trim()) return toast('No code to push');
+    const repo = $('#ghRepo').value.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '').replace(/^\/+|\/+$/g, '');
+    const path = $('#ghPath').value.trim().replace(/^\/+/, '') || 'index.html';
+    const msg = $('#ghMsg').value.trim() || 'Update from SAIM AI AGENT';
+    if (!repo) return toast('Enter a repository name');
+    btn.disabled = true; btn.textContent = 'Pushing...';
+    try {
+      if (!state.githubLogin) {
+        const u = await ghCall('/user');
+        if (!u.ok) throw new Error('Could not read GitHub account');
+        state.githubLogin = (await u.json()).login;
+      }
+      let owner = state.githubLogin, name = repo;
+      if (repo.includes('/')) [owner, name] = repo.split('/');
+      const base = '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(name);
+      let r = await ghCall(base);
+      if (r.status === 404) {
+        if (owner.toLowerCase() !== state.githubLogin.toLowerCase()) throw new Error('Repository not found');
+        r = await ghCall('/user/repos', { method: 'POST', body: JSON.stringify({ name, private: $('#ghPrivate').checked }) });
+        if (!r.ok) throw new Error((await r.json()).message || 'Could not create repository');
+      } else if (!r.ok) throw new Error('GitHub error ' + r.status);
+      const filePath = path.split('/').map(encodeURIComponent).join('/');
+      let sha;
+      const ex = await ghCall(base + '/contents/' + filePath);
+      if (ex.ok) sha = (await ex.json()).sha;
+      const put = await ghCall(base + '/contents/' + filePath, { method: 'PUT', body: JSON.stringify({ message: msg, content: b64(state.code), sha }) });
+      const out = await put.json();
+      if (!put.ok) throw new Error(out.message || 'Push failed');
+      store.set('sain.ghRepo', repo);
+      const box = $('#githubResult'), link = out.content && out.content.html_url;
+      box.innerHTML = 'Pushed: <a href="' + esc(link) + '" target="_blank" rel="noopener" class="underline font-bold">' + esc(link) + '</a>';
+      box.classList.remove('hidden'); toast('Pushed to GitHub');
+    } catch (err) { toast('Push failed: ' + err.message, 4000); ghRefresh(); }
+    finally { btn.disabled = false; if (state.githubToken) btn.textContent = 'Push to GitHub'; }
+  });
+
+  /* ---------- Auto fix ---------- */
+  bind('#btnFix', 'click', async () => {
+    if (!state.code.trim()) return toast('No code to audit');
+    if (state.busy) return;
+    const errs = state.errors.length ? state.errors.map((e, i) => (i + 1) + '. ' + e).join('\n') : 'No runtime errors captured; check responsive bugs, event wiring and accessibility.';
+    const prompt = 'Inspect and fix this single-file HTML app.\nRuntime errors:\n' + errs + '\n\nCode:\n```html\n' + state.code + '\n```\n\nReturn the COMPLETE corrected index.html in ONE ```html block, then bullet changes.';
+    state.busy = true; const btn = $('#btnFix'); btn.disabled = true; toast('Auditing & repairing...', 3000);
+    try {
+      const res = await runUnifiedStream([{ role: 'user', content: prompt }], { system: FIX_PROMPT });
+      const m = res.text.match(CODE_RE);
+      if (m && m[1]) { setCode(m[1].trim(), true); toast('Repaired by ' + (res.entry ? res.entry.name : 'AI')); }
+      else toast('AI returned suggestions (Add your API key for auto-apply)');
+    } catch (err) { toast('Audit notice: ' + err.message, 4000); }
+    finally { state.busy = false; btn.disabled = false; }
+  });
+
+  /* ---------- Modals ---------- */
+  function openModal(el) { if (typeof el === 'string') el = $(el); if (!el) return; el.classList.add('open'); if (el.id === 'modalGithub') ghRefresh(); icons(); }
+  function closeModal(el) { if (el) el.classList.remove('open'); }
+  delegate('[data-open]', 'click', (e, t) => { openModal(t.dataset.open); closeDrawer(); });
+  delegate('[data-close]', 'click', (e, t) => closeModal(t.closest('.modal')));
+
+  function renderProviderCards() {
+    const body = $('#providersBody'); body.innerHTML = '';
+    PROVIDERS.forEach(p => {
+      const has = hasKeyFor(p.id) && p.id !== 'custom' || (p.id === 'custom' && !!state.keys.custom);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pcard' + (has ? ' has-key' : '');
+      b.innerHTML = `<div class="w-10 h-10 rounded-xl ${p.bg} grid place-items-center shrink-0"><i data-lucide="${p.icon}" class="w-4 h-4 ${p.color}"></i></div><div class="min-w-0 flex-1"><div class="flex items-center gap-2 mb-0.5 flex-wrap"><span class="font-semibold text-xs text-white">${p.name}</span><span class="text-[9px] px-1.5 rounded-full ${has ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${has ? 'Active Key' : 'Add Key'}</span></div><div class="text-[11px] text-zinc-500 truncate">${p.desc}</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-zinc-600 shrink-0"></i>`;
+      b.addEventListener('click', () => openProviderInput(p.id)); body.appendChild(b);
+    });
+    icons();
+  }
+  function openProviders() { renderProviderCards(); openModal('#modalProviders'); closeDrawer(); }
+
+  let curProvider = null;
+  function openProviderInput(id) {
+    const p = providerOf(id); curProvider = id;
+    $('#inputTitle').textContent = p.name; $('#inputSubtitle').textContent = p.desc;
+    const inp = $('#providerKeyInput'); inp.value = state.keys[id] || ''; inp.placeholder = p.hint; inp.type = 'password';
+    $('#customEndpointBox').classList.toggle('hidden', id !== 'custom');
+    if (id === 'custom') $('#customEndpointInput').value = state.customEndpoint;
+    $('#providerKeyHelp').innerHTML = 'Get your key: <a href="' + esc(p.docs) + '" target="_blank" rel="noopener" class="text-purple-400 underline">' + esc(p.docs) + '</a>';
+    $('#btnRemoveProviderKey').style.display = state.keys[id] ? '' : 'none';
+    openModal('#modalKey');
+  }
+  bind('#toggleKeyVisibility', 'click', () => { const i = $('#providerKeyInput'); i.type = i.type === 'password' ? 'text' : 'password'; });
+  bind('#btnSaveProviderKey', 'click', async () => {
+    if (!curProvider) return;
+    const val = $('#providerKeyInput').value.trim();
+    if (curProvider === 'custom') { state.customEndpoint = $('#customEndpointInput').value.trim() || 'http://localhost:11434/v1'; store.set('sain.customEndpoint', state.customEndpoint); }
+    if (val) state.keys[curProvider] = val; else if (curProvider !== 'custom') return toast('Key is empty');
+    store.set('sain.keys', state.keys); closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Checking key...', 5000);
+    const p = curProvider, k = (state.keys[p] || '').trim();
+    try {
+      const ids = await discoverModels(p, k);
+      if (ids === null) return toast('Key saved');
+      applyDiscovered(p, ids); persistModels(); updateActiveLabel(); renderModels();
+      toast(ids.length ? 'Key verified · ' + ids.length + ' models available' : 'Key verified');
+    } catch (err) { toast('Key check failed: ' + shortErr(err), 7000); }
+  });
+  bind('#btnRemoveProviderKey', 'click', () => {
+    if (!curProvider) return; delete state.keys[curProvider]; store.set('sain.keys', state.keys);
+    closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Key removed');
+  });
+
+  /* ---------- Settings ---------- */
+  function openSettings() {
+    const s = state.settings;
+    $('#settingTemp').value = s.temperature; $('#tempValue').textContent = Number(s.temperature).toFixed(2);
+    $('#settingMaxTokens').value = s.maxTokens; $('#settingTimeout').value = s.timeoutSec;
+    $('#settingProxy').value = s.corsProxy || '';
+    $('#settingSysPrompt').value = s.systemPrompt;
+    openModal('#modalSettings');
+  }
+  bind('#settingTemp', 'input', e => { $('#tempValue').textContent = Number(e.target.value).toFixed(2); });
+  bind('#btnSaveSettings', 'click', () => {
+    const t = parseFloat($('#settingTemp').value);
+    state.settings = {
+      temperature: isNaN(t) ? 0.4 : t,
+      maxTokens: parseInt($('#settingMaxTokens').value, 10) || 8192,
+      timeoutSec: parseInt($('#settingTimeout').value, 10) || 90,
+      corsProxy: $('#settingProxy').value.trim(),
+      systemPrompt: $('#settingSysPrompt').value.trim()
+    };
+    store.set('sain.settings', state.settings); closeModal($('#modalSettings')); toast('Settings saved');
+  });
+  bind('#btnResetSettings', 'click', () => {
+    state.settings = { systemPrompt: '', temperature: 0.4, maxTokens: 8192, timeoutSec: 90, corsProxy: '' };
+    store.set('sain.settings', state.settings); openSettings(); toast('Defaults restored');
+  });
+
+  /* ---------- Dedicated SAIM AI AGENT Guide / Support ---------- */
+  const guideScroll = $('#guideScroll'), guideInput = $('#guideInput');
+  function addGuideBubble(role, text) {
+    const wrap = document.createElement('div'); wrap.className = 'flex fade-in ' + (role === 'user' ? 'justify-end' : '');
+    const b = document.createElement('div');
+    b.className = 'msg max-w-[90%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ' + (role === 'user' ? 'bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-br-md' : 'bg-white/5 border border-white/5 text-zinc-300 rounded-tl-md');
+    b.innerHTML = fmt(text); wrap.appendChild(b); guideScroll.appendChild(wrap); guideScroll.scrollTop = guideScroll.scrollHeight;
+    return b;
+  }
+  function openGuide() {
+    $('#assistantPanel').classList.add('open'); $('#assistantBackdrop').classList.remove('hidden');
+    if (!guideScroll.children.length) {
+      if (state.guide.length) {
+        state.guide.forEach(m => addGuideBubble(m.role, m.content));
+      } else {
+        addGuideBubble('assistant', 'Hello! I am **SAIM AI AGENT**, your studio assistant. What would you like to build?\n\nTo generate full projects, add your API key with the **Keys** button.');
+      }
+    }
+    setTimeout(() => guideInput.focus(), 300);
+  }
+  function closeGuide() { $('#assistantPanel').classList.remove('open'); $('#assistantBackdrop').classList.add('hidden'); }
+  bind('#guideCloseBtn', 'click', closeGuide); bind('#assistantBackdrop', 'click', closeGuide);
+  bind('#guideClearBtn', 'click', () => { state.guide = []; store.set('sain.guide', []); guideScroll.innerHTML = ''; openGuide(); });
+  
+  async function sendGuide() {
+    const text = guideInput.value.trim(); if (!text) return;
+    guideInput.value = ''; state.guide.push({ role: 'user', content: text }); addGuideBubble('user', text);
+    
+    const bubble = addGuideBubble('assistant', '...');
+    try {
+      let streamedText = '';
+      const res = await runUnifiedStream(state.guide.slice(-12), {
+        system: GUIDE_PROMPT,
+        onChunk: (chunk, acc) => {
+          streamedText = acc;
+          bubble.innerHTML = fmt(acc);
+          guideScroll.scrollTop = guideScroll.scrollHeight;
+        }
+      });
+      state.guide.push({ role: 'assistant', content: res.text || streamedText });
+      store.set('sain.guide', state.guide.slice(-30));
+    } catch (e) { bubble.innerHTML = '⚠️ ' + esc(e.message); }
+  }
+  bind('#guideSendBtn', 'click', sendGuide);
+  bind(guideInput, 'keydown', e => { if (e.key === 'Enter' && !e.shiftKey && isDesktop()) { e.preventDefault(); sendGuide(); } });
+
+  /* ---------- Firebase (Auth + Realtime Database) ---------- */
+  // Paste your Firebase web config below.
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA2tXddGxNdcooTlg9JsYNUwzpxxnobE0A",
+    authDomain: "saimaiagent.firebaseapp.com",
+    databaseURL: "https://saimaiagent-default-rtdb.firebaseio.com",
+    projectId: "saimaiagent",
+    storageBucket: "saimaiagent.firebasestorage.app",
+    messagingSenderId: "1063618307954",
+    appId: "1:1063618307954:web:5ff9a4983ed1d1f18e9feb",
+    measurementId: "G-ZLY1S4GQY2"
+  };
+  const FB_VER = '10.13.0';
+  const fb = { auth: null, db: null, ref: null, cfgRef: null };
+  let fbInit = null;
+  const loadScript = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
+
+  // Owner (trial / support agent) config is read silently from: sain_workspace/admin_config { geminiKey, model }
+  function watchOwnerConfig() {
+    if (!fb.db) { resolveOwner(); return; }
+    if (fb.cfgRef) { try { fb.cfgRef.off('value'); } catch (e) {} }
+    fb.cfgRef = fb.db.ref('sain_workspace/admin_config');
+    fb.cfgRef.on('value', snap => {
+      const v = snap.val() || {};
+      state.ownerGeminiKey = String(v.geminiKey || '').trim();
+      if (v.model) state.ownerModel = String(v.model);
+      resolveOwner();
+    }, () => resolveOwner());
+  }
+
+  async function initFirebase() {
+    if (!FIREBASE_CONFIG.apiKey) { resolveOwner(); return; }
+    try {
+      if (!window.firebase) {
+        await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-app-compat.js');
+        await Promise.all([
+          loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-auth-compat.js'),
+          loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-database-compat.js')
+        ]);
+      }
+      const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+      fb.auth = firebase.auth(app);
+      if (FIREBASE_CONFIG.databaseURL) fb.db = firebase.database(app);
+      watchOwnerConfig();
+      fb.auth.onAuthStateChanged(onAuthChange);
+    } catch (e) { resolveOwner(); }
+  }
+
+  function onAuthChange(user) {
+    state.user = user || null;
+    renderAccount(user);
+    if (!user && !$('#app').classList.contains('hidden')) showLanding();
+    watchOwnerConfig();
+    if (fb.ref) { try { fb.ref.off(); } catch (e) {} fb.ref = null; }
+    if (user && fb.db) {
+      fb.ref = fb.db.ref('users/' + user.uid + '/workspace');
+      fb.ref.on('value', snap => {
+        const v = snap.val();
+        if (v && v.code) { if (v.code !== state.code) { setCode(v.code, false, false); if (state.view === 'preview') runPreview(); } }
+        else if (state.code && state.code !== DEFAULT_CODE) pushRemote();
+      });
+    }
+  }
+  function pushRemote() { if (!fb.ref) return; try { fb.ref.update({ code: state.code, updatedAt: Date.now() }); } catch (e) {} }
+
+  const AUTH_ERR = {
+    'auth/popup-closed-by-user': '', 'auth/cancelled-popup-request': '',
+    'auth/popup-blocked': 'Allow popups to sign in',
+    'auth/unauthorized-domain': 'This domain is not authorized in Firebase Auth',
+    'auth/operation-not-allowed': 'This sign-in method is not enabled in Firebase',
+    'auth/account-exists-with-different-credential': 'An account with this email already exists. Sign in with the original provider first.'
+  };
+  async function signIn(kind) {
+    if (!fb.auth && fbInit) await fbInit;
+    if (!fb.auth) { toast('Sign-in is not available'); return null; }
+    const github = kind === 'github';
+    const provider = github ? new firebase.auth.GithubAuthProvider() : new firebase.auth.GoogleAuthProvider();
+    if (github) provider.addScope('repo');
+    try {
+      const u = fb.auth.currentUser;
+      let r;
+      if (u && github) {
+        const linked = u.providerData.some(p => p.providerId === 'github.com');
+        try { r = await (linked ? u.reauthenticateWithPopup(provider) : u.linkWithPopup(provider)); }
+        catch (e) { if (e.code !== 'auth/credential-already-in-use' && e.code !== 'auth/provider-already-linked') throw e; r = await fb.auth.signInWithPopup(provider); }
+      } else r = await fb.auth.signInWithPopup(provider);
+      const token = r.credential && r.credential.accessToken;
+      if (github && token) { state.githubToken = token; state.githubLogin = ''; store.set('sain.githubToken', token); }
+      if (r.user) { state.user = r.user; renderAccount(r.user); }
+      toast('Signed in');
+      return r;
+    } catch (e) { const m = AUTH_ERR[e.code]; if (m !== '') toast(m || 'Sign-in failed'); return null; }
+  }
+  function signOutUser() {
+    if (fb.auth) fb.auth.signOut().catch(() => {});
+    state.githubToken = ''; state.githubLogin = ''; store.set('sain.githubToken', '');
+    toast('Signed out');
+  }
+  function renderAccount(user) {
+    const box = $('#authBox'), av = $('#avatarBtn'), la = $('#landingAuth');
+    if (la) la.classList.toggle('hidden', !!user);
+    const row = 'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 text-left';
+    if (user) {
+      const name = user.displayName || user.email || 'User';
+      av.innerHTML = user.photoURL ? '<img src="' + esc(user.photoURL) + '" alt="" referrerpolicy="no-referrer" class="w-full h-full object-cover" />' : esc(name.charAt(0).toUpperCase());
+      box.innerHTML = '<div class="font-semibold text-white truncate">' + esc(name) + '</div>' + (user.email ? '<div class="text-[10px] text-zinc-500 truncate">' + esc(user.email) + '</div>' : '') +
+        '<button data-auth="signout" class="mt-2 ' + row + '"><i data-lucide="log-out" class="w-3.5 h-3.5 text-red-400"></i> Sign out</button>';
+    } else {
+      av.textContent = 'U';
+      box.innerHTML = '<div class="font-semibold text-white mb-1">Guest</div>' +
+        '<button data-auth="google" class="' + row + '"><i data-lucide="log-in" class="w-3.5 h-3.5 text-sky-300"></i> Continue with Google</button>' +
+        '<button data-auth="github" class="' + row + '"><i data-lucide="github" class="w-3.5 h-3.5"></i> Continue with GitHub</button>';
+    }
+    icons();
+  }
+  delegate('[data-auth]', 'click', (e, t) => { const a = t.dataset.auth; if (a === 'signout') signOutUser(); else { const all = $$('[data-auth]'); all.forEach(b => b.disabled = true); signIn(a).then(r => { if (r) { closeModal($('#modalLogin')); if (!$('#landing').classList.contains('hidden')) showApp(); } }).finally(() => all.forEach(b => b.disabled = false)); } });
+
+  /* ---------- Voice (speech-to-text + spoken replies) ---------- */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const voice = { rec: null, on: false, convo: false, idle: 0, speak: !!store.get('sain.voiceSpeak', false), lang: store.get('sain.voiceLang', 'en-US') };
+  function updateVoiceUI() {
+    const set = (id, on, cls) => { const b = $(id); if (b) cls.split(' ').forEach(c => b.classList.toggle(c, on)); };
+    set('#btnMic', voice.on, '!text-red-400 bg-red-500/15');
+    set('#btnVoiceMode', voice.convo, '!text-cyan-300 bg-cyan-500/15');
+    set('#btnSpeak', voice.speak || voice.convo, '!text-purple-300 bg-purple-500/15');
+    const l = $('#btnVoiceLang'); if (l) l.textContent = voice.lang.startsWith('bn') ? 'BN' : 'EN';
+  }
+  function stopListening() {
+    if (voice.rec) { voice.rec.onend = null; try { voice.rec.stop(); } catch (e) {} }
+    voice.rec = null; voice.on = false; updateVoiceUI();
+  }
+  function stopSpeaking() { try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} }
+  function startListening() {
+    if (!SR) { toast('Voice input is not supported in this browser'); voice.convo = false; updateVoiceUI(); return; }
+    stopListening(); stopSpeaking();
+    const rec = new SR();
+    rec.lang = voice.lang; rec.interimResults = true; rec.continuous = !voice.convo;
+    const base = promptInput.value ? promptInput.value.replace(/\s+$/, '') + ' ' : '';
+    let finalText = '';
+    rec.onresult = e => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += t; else interim += t;
+      }
+      promptInput.value = base + finalText + interim; autoGrow();
+    };
+    rec.onerror = e => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { toast('Microphone permission denied'); voice.convo = false; }
+    };
+    rec.onend = () => {
+      voice.rec = null; voice.on = false;
+      if (voice.convo && !state.busy) {
+        if (promptInput.value.trim()) { voice.idle = 0; sendMessage(); }
+        else if (++voice.idle >= 3) { voice.convo = false; toast('Voice mode stopped'); }
+        else setTimeout(() => { if (voice.convo && !voice.on && !state.busy) startListening(); }, 300);
+      }
+      updateVoiceUI();
+    };
+    voice.rec = rec; voice.on = true;
+    try { rec.start(); } catch (e) { voice.on = false; voice.rec = null; }
+    updateVoiceUI();
+  }
+  function speakText(text, done) {
+    if (!('speechSynthesis' in window)) { if (done) done(); return; }
+    const clean = text.replace(/```[\s\S]*?```/g, ' The code is ready in the preview. ').replace(/https?:\/\/\S+/g, '').replace(/[*_`#>]/g, '').trim().slice(0, 1200);
+    if (!clean) { if (done) done(); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = voice.lang;
+    const vs = speechSynthesis.getVoices();
+    const v = vs.find(x => x.lang === voice.lang) || vs.find(x => x.lang.startsWith(voice.lang.slice(0, 2)));
+    if (v) u.voice = v;
+    u.onend = u.onerror = () => { if (done) done(); };
+    speechSynthesis.speak(u);
+  }
+  function voiceAfterReply(text) {
+    if (voice.convo) speakText(text, () => { if (voice.convo && !state.busy) startListening(); });
+    else if (voice.speak) speakText(text);
+  }
+  bind('#btnMic', 'click', () => { if (voice.on) stopListening(); else { voice.convo = false; startListening(); } });
+  bind('#btnVoiceMode', 'click', () => {
+    voice.convo = !voice.convo; voice.idle = 0;
+    if (voice.convo) startListening(); else { stopListening(); stopSpeaking(); }
+    updateVoiceUI();
+  });
+  bind('#btnSpeak', 'click', () => {
+    voice.speak = !voice.speak; store.set('sain.voiceSpeak', voice.speak);
+    if (!voice.speak) stopSpeaking();
+    updateVoiceUI(); toast(voice.speak ? 'Spoken replies on' : 'Spoken replies off');
+  });
+  bind('#btnVoiceLang', 'click', () => {
+    voice.lang = voice.lang.startsWith('bn') ? 'en-US' : 'bn-BD'; store.set('sain.voiceLang', voice.lang);
+    const was = voice.on; if (was) startListening(); updateVoiceUI();
+    toast('Voice language: ' + (voice.lang.startsWith('bn') ? 'Bengali' : 'English'));
+  });
+  updateVoiceUI();
+
+  /* ---------- Global Actions ---------- */
+  delegate('[data-action]', 'click', (e, el) => {
+    const a = el.dataset.action;
+    if (a === 'launch') showApp();
+    else if (a === 'home') showLanding();
+    else if (a === 'keys') openProviders();
+    else if (a === 'settings') { openSettings(); closeDrawer(); }
+    else if (a === 'guide') openGuide();
+  });
+  bind('#keyGuardChip', 'click', openProviders);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { $$('.modal.open').forEach(closeModal); closeGuide(); $$('.ddmenu').forEach(m => m.classList.add('hidden')); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && document.activeElement === editor) { e.preventDefault(); e.shiftKey ? redoCode() : undoCode(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && document.activeElement === editor) { e.preventDefault(); redoCode(); }
+  });
+
+  /* ---------- Boot Studio ---------- */
+  editor.value = state.code = DEFAULT_CODE;
+  updateLineNums(); setView('code'); renderAgentMenu(); setAgent(state.agent);
+  renderEmptyState(); renderChatHistory(); renderModels(); updateActiveLabel();
+  renderAccount(null); loadCatalogue().then(syncKeyedProviders); fbInit = initFirebase();
+  if (state.chats.length) {
+    state.currentChatId = state.chats[0].id;
+    state.messages = state.chats[0].messages || [];
+    if (state.messages.length) {
+      chatScroll.innerHTML = '';
+      state.messages.forEach(m => addMessage(m.role, m.content, m.meta));
+    }
+    renderChatHistory();
+  } else newChatSession();
+  showLanding();
+})();
+</script>
 </body>
 </html>
