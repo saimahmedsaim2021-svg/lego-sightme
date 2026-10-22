@@ -99,7 +99,6 @@
 
 <body class="overflow-x-hidden antialiased bg-ink-950 text-zinc-100">
 
-<!-- ================= LANDING ================= -->
 <div id="landing" class="hidden relative min-h-[100dvh] overflow-x-hidden flex flex-col">
   <div class="blob w-[420px] h-[420px] bg-purple-600 -top-24 -left-24"></div>
   <div class="blob w-[380px] h-[380px] bg-cyan-500 top-1/3 -right-24"></div>
@@ -128,7 +127,6 @@
   <footer class="relative z-10 border-t border-white/5 py-5 text-center text-xs text-zinc-500">&copy; <span id="year"></span> SAIM AI AGENT</footer>
 </div>
 
-<!-- ================= WORKSPACE ================= -->
 <div id="app" class="hidden h-[100dvh] flex-col bg-ink-950">
 
   <header class="h-14 shrink-0 flex items-center gap-1.5 px-2 sm:px-4 border-b border-white/5 bg-ink-900 relative z-30">
@@ -320,7 +318,6 @@
   </div>
 </div>
 
-<!-- ================= MODALS ================= -->
 <div id="modalLogin" class="modal"><div class="bg" data-close></div>
   <div class="mbox fade-in sm:!max-w-sm">
     <div class="blob w-48 h-48 bg-purple-600 -top-16 -left-16" style="opacity:.25"></div>
@@ -402,7 +399,6 @@
   </div>
 </div>
 
-<!-- ================= AI GUIDE / CUSTOMER CARE ================= -->
 <div id="assistantBackdrop" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"></div>
 <aside id="assistantPanel" class="fixed top-0 right-0 bottom-0 z-[61] w-full sm:w-[420px] flex flex-col bg-ink-900 border-l border-white/10 shadow-2xl" style="padding-top:env(safe-area-inset-top)">
   <div class="h-14 shrink-0 flex items-center gap-2 px-4 border-b border-white/5">
@@ -452,7 +448,6 @@
 <div id="loginBadge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
 <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-[95] pointer-events-none opacity-0 translate-y-3 transition-all duration-300 px-4 py-2 rounded-xl glass text-xs font-medium shadow-2xl max-w-[90vw] text-center"></div>
 
-<!-- ================= JAVASCRIPT LOGIC ================= -->
 <script>
 (function () {
   'use strict';
@@ -587,13 +582,29 @@ Assist the user with:
     activeAbort: null, stopFlag: false,
     autoMode: store.get('sain.autoMode', true), priceFilter: 'all'
   };
-  let resolveOwner; const ownerReady = new Promise(r => { resolveOwner = r; });
   let resolveAuth; const authReady = new Promise(r => { resolveAuth = r; });
   let keysReady = Promise.resolve();
-  const waitForAccount = () => Promise.race([authReady.then(() => keysReady), new Promise(r => setTimeout(r, 6000))]);
 
-  // ---------- Admin / default system keys ----------
-  const ADMIN = { keys: {}, geminiModel: 'gemini-flash-latest', fsDoc: {}, legacy: {} };
+  // =====================================================
+  // FIX: Admin key cache (Firestore-only, fast resolve)
+  // =====================================================
+  let adminReady = false;
+  let adminResolvers = [];
+  function markAdminReady() {
+    adminReady = true;
+    const list = adminResolvers; adminResolvers = [];
+    list.forEach(fn => { try { fn(); } catch (e) {} });
+    updateActiveLabel();
+  }
+  function waitForAdmin() {
+    if (adminReady) return Promise.resolve();
+    return new Promise(res => {
+      adminResolvers.push(res);
+      setTimeout(res, 2500);
+    });
+  }
+
+  const ADMIN = { keys: {}, geminiModel: 'gemini-flash-latest', fsDoc: {} };
   const TRIAL_ORDER = ['gemini', 'deepseek', 'openai', 'openrouter', 'anthropic'];
   const TRIAL_NAMES = { gemini: 'Gemini Flash', deepseek: 'DeepSeek Chat', openai: 'GPT-4o mini', openrouter: 'OpenRouter Auto', anthropic: 'Claude Haiku' };
   const TRIAL_MODELS = { deepseek: 'deepseek-chat', openai: 'gpt-4o-mini', openrouter: 'openrouter/auto', anthropic: 'claude-haiku-5-5' };
@@ -611,15 +622,14 @@ Assist the user with:
     return trimmed ? { text: (out.trim() + '\n\n' + TRIAL_LIMIT_MSG).trim(), trimmed } : { text, trimmed };
   }
   function rebuildAdmin() {
-    const src = ADMIN.fsDoc || {}, leg = ADMIN.legacy || {}, next = {};
+    const src = ADMIN.fsDoc || {}, next = {};
     ['gemini', 'anthropic', 'openai', 'deepseek', 'openrouter'].forEach(p => {
-      const k = cleanKey(src[p] || (p === 'anthropic' ? src.claude : '') || (p === 'gemini' ? src.geminiKey : '') || leg[p] || '');
+      const k = cleanKey(src[p] || (p === 'anthropic' ? src.claude : '') || (p === 'gemini' ? src.geminiKey : ''));
       if (k) next[p] = k;
     });
     ADMIN.keys = next;
-    const m = String(src.geminiModel || src.model || leg.model || '').trim();
+    const m = String(src.geminiModel || src.model || '').trim();
     if (/^[\w.\-]{3,60}$/.test(m)) ADMIN.geminiModel = m;
-    updateActiveLabel();
   }
   const hasPersonalCloudKey = () => PROVIDER_ORDER.some(p => p !== 'custom' && hasKeyFor(p));
   const modelById = id => state.models.find(m => m.id === id);
@@ -658,7 +668,6 @@ Assist the user with:
     }
   }
 
-  /* ---------- Landing subtitle ---------- */
   (function () {
     const phrases = ['Multi-Model Auto-Handoff: Zero Broken Code.', 'Universal BYOK: Gemini, Claude, OpenAI, Groq & Local.', 'Speak to the AI in Bengali and English.', 'Surgical Patch Engine: Edit single lines in seconds.', 'Sign in with GitHub and push straight to a repository.'];
     const el = $('#dynamicSubtitle'); let p = 0, c = 0, del = false;
@@ -671,9 +680,8 @@ Assist the user with:
     })();
   })();
 
-  /* ---------- Screens (FIXED: login gate) ---------- */
+  /* ---------- Screens (login gate) ---------- */
   function showApp() {
-    // FIX #3: hard login gate — workspace is only reachable after sign-in.
     if (!state.user) { openModal('#modalLogin'); return; }
     $('#landing').classList.add('hidden');
     const app = $('#app'); app.classList.remove('hidden'); app.classList.add('flex');
@@ -684,7 +692,6 @@ Assist the user with:
     $('#landing').classList.remove('hidden'); closeDrawer(); icons();
   }
 
-  /* ---------- Dropdowns ---------- */
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-dd]');
     $$('.ddmenu').forEach(m => { if (!t || m !== t.nextElementSibling) m.classList.add('hidden'); });
@@ -706,7 +713,6 @@ Assist the user with:
   }
   delegate('[data-agent]', 'click', (e, t) => setAgent(t.dataset.agent));
 
-  /* ---------- Sidebar ---------- */
   const sidebar = $('#sidebar'), overlay = $('#drawerOverlay');
   const openDrawer = () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); };
   const closeDrawer = () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); };
@@ -721,9 +727,8 @@ Assist the user with:
     if (isDesktop()) { state.collapsed = false; sidebar.classList.remove('sb-collapsed'); } else openDrawer();
   });
 
-  /* ---------- Models (FIXED: full new SEED list) ---------- */
+  /* ---------- Models: your full SEED list ---------- */
   const SEED = [
-    // --- OpenAI Models ---
     ['openai', 'gpt-6.1-sol', 'OpenAI: GPT-6.1 Sol'],
     ['openai', 'gpt-6-astra', 'OpenAI: GPT-6 Astra'],
     ['openai', 'gpt-6-luna', 'OpenAI: GPT-6 Luna'],
@@ -731,59 +736,47 @@ Assist the user with:
     ['openai', 'gpt-4o', 'OpenAI: GPT-4o'],
     ['openai', 'gpt-4o-mini', 'OpenAI: GPT-4o Mini'],
 
-    // --- Anthropic Claude Series ---
     ['anthropic', 'claude-opus-5-5', 'Anthropic: Claude Opus 5.5'],
     ['anthropic', 'claude-sonnet-5-5', 'Anthropic: Claude Sonnet 5.5'],
     ['anthropic', 'claude-haiku-5-5', 'Anthropic: Claude Haiku 5.5'],
     ['anthropic', 'claude-sonnet-4-6', 'Anthropic: Claude Sonnet 4.6'],
 
-    // --- Google Gemini Series ---
     ['gemini', 'gemini-4-argon', 'Google: Gemini 4 Argon'],
     ['gemini', 'gemini-3.1-pro', 'Google: Gemini 3.1 Pro'],
     ['gemini', 'gemini-3.8-flash', 'Google: Gemini 3.8 Flash'],
     ['gemini', 'gemini-2.5-flash', 'Google: Gemini 2.5 Flash'],
     ['gemini', 'gemini-flash-latest', 'Google: Gemini Flash (Latest)'],
 
-    // --- DeepSeek Series ---
     ['deepseek', 'deepseek-v4.1-flash', 'DeepSeek: V4.1 Flash'],
     ['deepseek', 'deepseek-chat', 'DeepSeek: V3 / V4 Chat'],
     ['deepseek', 'deepseek-reasoner', 'DeepSeek: R1 Reasoner'],
 
-    // --- Meta Llama Series ---
     ['groq', 'meta-llama/llama-3.3-70b-instruct', 'Meta: Llama 3.3 70B Instruct'],
     ['groq', 'meta-llama/llama-3.1-8b-instruct', 'Meta: Llama 3.1 8B Instruct'],
     ['together', 'meta-llama/llama-3.3-70b-instruct-turbo', 'Meta: Llama 3.3 70B Turbo'],
 
-    // --- NVIDIA Frontier Models ---
     ['openrouter', 'nvidia/nemotron-3-ultra-550b-a55b:free', 'NVIDIA: Nemotron 3 Ultra (Free)'],
     ['openrouter', 'nvidia/nemotron-3.5-super-vl:free', 'NVIDIA: Nemotron 3.5 Super VL (Free)'],
 
-    // --- xAI Grok Series ---
     ['groq', 'grok-4.7', 'xAI: Grok 4.7'],
     ['groq', 'grok-4.1', 'xAI: Grok 4.1 Fast'],
 
-    // --- Mistral AI Series ---
     ['mistral', 'mistral-large-4', 'Mistral: Large 4'],
     ['mistral', 'codestral-latest', 'Mistral: Codestral'],
     ['mistral', 'mistral-medium-latest', 'Mistral: Medium'],
 
-    // --- Alibaba Qwen Series ---
     ['openrouter', 'qwen/qwen3-coder:free', 'Alibaba: Qwen 3 Coder (Free)'],
     ['openrouter', 'qwen/qwen-2.5-72b-instruct', 'Alibaba: Qwen 2.5 72B'],
 
-    // --- Z.ai & MiniMax ---
     ['openrouter', 'z-ai/glm-5.3-flash', 'Z.ai: GLM 5.3 Flash'],
     ['openrouter', 'minimax/m3.1-flash:free', 'MiniMax: M3.1 Flash (Free)'],
 
-    // --- Xiaomi ---
     ['openrouter', 'xiaomi/mimo-v2.6-flash', 'Xiaomi: MiMo-V2.6 Flash'],
 
-    // --- Perplexity Search Models ---
     ['perplexity', 'sonar-pro', 'Perplexity: Sonar Pro (Search)'],
     ['perplexity', 'sonar-reasoning-pro', 'Perplexity: Sonar Reasoning Pro'],
     ['perplexity', 'sonar', 'Perplexity: Sonar Standard'],
 
-    // --- OpenRouter & Local ---
     ['openrouter', 'openrouter/free', 'OpenRouter: Auto-Router (Free Pool)'],
     ['openrouter', 'openrouter/auto', 'OpenRouter: Best Community Auto-Route'],
     ['custom', 'llama3', 'Local: Ollama / Llama 3']
@@ -856,7 +849,7 @@ Assist the user with:
     }
     $$('[data-price]').forEach(b => { b.className = 'flex-1 py-1 rounded-md ' + (b.dataset.price === state.priceFilter ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'); });
   }
-    function modelRow(m, ranked) {
+  function modelRow(m, ranked) {
     const prov = providerOf(m.provider) || { icon: 'cpu', color: 'text-zinc-300', name: m.provider };
     const idx = state.priority.indexOf(m.id), hasKey = hasKeyFor(m.provider);
     const row = document.createElement('div');
@@ -907,7 +900,6 @@ Assist the user with:
   delegate('[data-price]', 'click', (e, t) => { state.priceFilter = t.dataset.price; renderModels(); });
   bind('#btnSyncModels', 'click', async () => { toast('Refreshing models...'); deadSet.clear(); store.set('sain.dead', []); await loadCatalogue(); await syncKeyedProviders(); toast('Models updated'); });
 
-  /* ---------- Key check + model discovery ---------- */
   function shortErr(err) {
     let m = String((err && err.message) || err || 'Unknown error');
     const j = m.indexOf('{');
@@ -940,14 +932,6 @@ Assist the user with:
     const extra = p === 'openai' ? /babbage|davinci|instruct|codex|search|computer-use|sora/i : null;
     return filterLegacy(p, ids.filter(id => !/embed|moderation|whisper|tts|transcribe|image|dall|audio|realtime|rerank|guard|imagen|veo|live|aqa|gemma|ocr|robotics|deep-research|learnlm|lyria|-exp\b/i.test(id) && !(extra && extra.test(id))));
   }
-  function pickModels(p, ids) {
-    const out = [];
-    (PREFER[p] || []).forEach(re => {
-      const hit = ids.filter(i => re.test(i)).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
-      if (hit && !out.includes(hit)) out.push(hit);
-    });
-    return out.slice(0, 4);
-  }
   function applyDiscovered(p, ids) {
     if (!ids || !ids.length) return;
     const sub = id => id.split('/').slice(1).join('/');
@@ -973,7 +957,6 @@ Assist the user with:
     return p.endsWith('/') || p.endsWith('?') ? p + url : p + '/' + url;
   }
 
-  /* ---------- Streaming Provider Callers ---------- */
   const ENDPOINTS = {
     openrouter: 'https://openrouter.ai/api/v1/chat/completions', openai: 'https://api.openai.com/v1/chat/completions',
     deepseek: 'https://api.deepseek.com/chat/completions', groq: 'https://api.groq.com/openai/v1/chat/completions',
@@ -1158,7 +1141,6 @@ Assist the user with:
     }
   }
 
-  /* ---------- Auto chain: every model of every keyed provider ---------- */
   const deadSet = new Set(store.get('sain.dead', []));
   const markDead = id => { deadSet.add(id); store.set('sain.dead', Array.from(deadSet)); };
   const subId = id => id.split('/').slice(1).join('/');
@@ -1176,16 +1158,18 @@ Assist the user with:
   const isAccountLevel = (err, p) => ['openai', 'anthropic', 'deepseek', 'mistral', 'together', 'perplexity'].includes(p) && (Number(err.status) === 402 || /insufficient[_ ]quota|credit balance|insufficient balance|payment required|exceeded your current quota/i.test(String(err.message || '')));
   const isBadKey = err => Number(err.status) === 401 || /api key not valid|invalid api key|incorrect api key|invalid x-api-key/i.test(String(err.message || ''));
 
-  /* ---------- Unified Stream Runner (Owner Trial vs User BYOK) ---------- */
+  // =====================================================
+  // FAST runUnifiedStream — no 6s wait
+  // =====================================================
   async function runUnifiedStream(rawMessages, opts) {
     opts = opts || {};
-    await waitForAccount();
     const messages = cleanMessages(rawMessages);
     state.stopFlag = false; state.lastFinish = '';
 
-    // 1. FREE TIER: no personal key -> admin fallback keys with hard limits
+    // FREE TIER
     if (!isUserByokActive()) {
-      await Promise.race([ownerReady, new Promise(r => setTimeout(r, 6000))]);
+      await waitForAdmin();  // fast: 0s if already loaded, max 2.5s otherwise
+
       const lastUser = messages.slice().reverse().find(m => m.role === 'user');
       if (!opts.system && lastUser && isHeavyRequest(lastUser.content))
         return { text: TRIAL_LIMIT_MSG, entry: { name: 'SAIM AI AGENT' }, isTrial: true, limited: true };
@@ -1235,7 +1219,10 @@ Assist the user with:
       throw new Error('The free tier is busy right now. Please try again shortly or add your personal API Key in Settings.');
     }
 
-    // 2. USER BYOK MODE
+    // USER BYOK MODE
+    await Promise.race([authReady, new Promise(r => setTimeout(r, 2000))]);
+    await Promise.race([keysReady, new Promise(r => setTimeout(r, 2000))]);
+
     const extra = (state.settings.systemPrompt || '').trim();
     const agent = AGENTS[state.agent] || AGENTS.coder;
     const system = opts.system || (INTENT_RULES + (voice.convo ? VOICE_RULES : '') +
@@ -1316,7 +1303,6 @@ Assist the user with:
     return raw ? [raw[0], raw[0]] : null;
   }
 
-  /* ---------- Apply AI output: surgical patches or full file ---------- */
   const PATCH_RE = /<{7} SEARCH[ \t]*\r?\n([\s\S]*?)\r?\n={7}[ \t]*\r?\n([\s\S]*?)\r?\n?>{7} REPLACE/g;
   function applyPatches(code, patches) {
     let out = code, ok = 0, bad = 0;
@@ -1431,6 +1417,8 @@ Assist the user with:
 
     const bubble = addMessage('assistant', '', '', true);
     const contentEl = bubble.querySelector('.msg-content');
+    // FIX: show immediate feedback while connecting
+    contentEl.innerHTML = '<span class="text-zinc-500 text-xs inline-flex items-center gap-1"><span class="dots"><span></span><span></span><span></span></span> Connecting to AI...</span>';
 
     try {
       const res = await runUnifiedStream(messagesForModel(), {
@@ -1468,7 +1456,6 @@ Assist the user with:
     }
   }
 
-  /* ---------- Sessions ---------- */
   function persistChats() { store.set('sain.chats', state.chats.slice(0, 20)); }
   function saveAppSnapshot(title, code) {
     if (!code || !String(code).trim()) return;
@@ -1541,7 +1528,6 @@ Assist the user with:
     e.target.value = ''; renderAttachments();
   });
 
-  /* ---------- Code editor & preview ---------- */
   const editor = $('#codeEditor'), frame = $('#previewFrame'), codePane = $('#codePane');
   const DEFAULT_CODE = '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Preview</title>\n  <script src="https://cdn.tailwindcss.com"><\/script>\n</head>\n<body class="min-h-screen bg-[#07070d] text-white flex items-center justify-center p-6 text-center">\n  <div class="max-w-md p-8 rounded-3xl bg-white/5 border border-white/10 shadow-2xl">\n    <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">SAIM Studio Ready</h1>\n    <p class="text-zinc-400 text-sm">Send a prompt to SAIM AI AGENT. Add your API keys to unlock autonomous code generation.</p>\n  </div>\n</body>\n</html>';
 
@@ -1613,7 +1599,6 @@ Assist the user with:
     $('#btnFullscreen').innerHTML = `<i data-lucide="${on ? 'minimize-2' : 'maximize-2'}" class="w-4 h-4"></i>`; icons();
   });
 
-  /* ---------- Mobile tabs / panes ---------- */
   function updateMobileTabs() {
     const active = state.pane === 'chat' ? 'chat' : state.view;
     $$('[data-mtab]').forEach(b => {
@@ -1639,7 +1624,6 @@ Assist the user with:
   let lastDesktop = isDesktop();
   window.addEventListener('resize', () => { const d = isDesktop(); if (d !== lastDesktop) { lastDesktop = d; if (d) closeDrawer(); setPane(state.pane); } });
 
-  /* ---------- Patch ---------- */
   bind('#btnApplyPatch', 'click', () => {
     const f = $('#patchFind').value, r = $('#patchReplace').value;
     if (!f) return toast('Enter the code to find');
@@ -1651,7 +1635,6 @@ Assist the user with:
     if (!isDesktop()) setPane('preview');
   });
 
-  /* ---------- GitHub Push ---------- */
   const ghFetch = (path, opts) => fetch('https://api.github.com' + path, Object.assign({ headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + state.githubToken, 'Content-Type': 'application/json' } }, opts));
   const b64 = str => btoa(unescape(encodeURIComponent(str)));
   async function ghCall(path, opts) {
@@ -1724,7 +1707,7 @@ Assist the user with:
       if (state.githubToken) btn.textContent = 'Push to GitHub'; 
     }
   });
-  /* ---------- Auto fix ---------- */
+
   bind('#btnFix', 'click', async () => {
     if (!state.code.trim()) return toast('No code to audit');
     if (state.busy) return;
@@ -1740,7 +1723,6 @@ Assist the user with:
     finally { state.busy = false; btn.disabled = false; }
   });
 
-  /* ---------- Modals ---------- */
   function openModal(el) { if (typeof el === 'string') el = $(el); if (!el) return; el.classList.add('open'); if (el.id === 'modalGithub') ghRefresh(); icons(); }
   function closeModal(el) { if (el) el.classList.remove('open'); }
   delegate('[data-open]', 'click', (e, t) => { openModal(t.dataset.open); closeDrawer(); });
@@ -1806,7 +1788,6 @@ Assist the user with:
     if (state.user) persistKey(p, null).catch(e => toast('Could not remove the saved copy: ' + shortErr(e), 5000));
   });
 
-  /* ---------- Settings ---------- */
   function openSettings() {
     const s = state.settings;
     $('#settingTemp').value = s.temperature; $('#tempValue').textContent = Number(s.temperature).toFixed(2);
@@ -1834,7 +1815,6 @@ Assist the user with:
     store.set('sain.settings', state.settings); openSettings(); toast('Defaults restored');
   });
 
-  /* ---------- Dedicated SAIM AI AGENT Guide / Support ---------- */
   const guideScroll = $('#guideScroll'), guideInput = $('#guideInput');
   function addGuideBubble(role, text) {
     const wrap = document.createElement('div'); wrap.className = 'flex fade-in ' + (role === 'user' ? 'justify-end' : '');
@@ -1880,7 +1860,9 @@ Assist the user with:
   bind('#guideSendBtn', 'click', sendGuide);
   bind(guideInput, 'keydown', e => { if (e.key === 'Enter' && !e.shiftKey && isDesktop()) { e.preventDefault(); sendGuide(); } });
 
-  /* ---------- Firebase (Auth + Firestore) ---------- */
+  /* =====================================================
+     Firebase — Firestore ONLY for admin keys (no RTDB)
+     ===================================================== */
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyA2tXddGxNdcooTlg9JsYNUwzpxxnobE0A",
     authDomain: "saimaiagent.firebaseapp.com",
@@ -1892,15 +1874,14 @@ Assist the user with:
     measurementId: "G-ZLY1S4GQY2"
   };
   const FB_VER = '10.13.0';
-  const fb = { auth: null, db: null, fs: null, ref: null, cfgRef: null, cfgUnsub: null, keysUnsub: null };
+  const fb = { auth: null, db: null, fs: null, ref: null, cfgRef: null, keysUnsub: null };
   let fbInit = null;
   const loadScript = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
 
-  // ---------- Admin / default system keys (FIXED: Firestore first, RTDB fallback) ----------
+  let ownerWatchStarted = false;
   function watchOwnerConfig() {
-    if (fb.cfgRef) { try { if (typeof fb.cfgRef.off === 'function') fb.cfgRef.off('value'); else if (fb.cfgRef.unsubscribe) fb.cfgRef.unsubscribe(); } catch (e) {} fb.cfgRef = null; }
-    let done = false;
-    const finish = () => { if (!done) { done = true; rebuildAdmin(); resolveOwner(); } };
+    if (ownerWatchStarted) { markAdminReady(); return; }
+    ownerWatchStarted = true;
 
     const apply = (v) => {
       v = v || {};
@@ -1914,48 +1895,29 @@ Assist the user with:
         model:       typeof v.model === 'string' ? v.model : ''
       };
       rebuildAdmin();
+      updateActiveLabel();
     };
 
-    // 1) Firestore: config/system_keys (primary source of truth)
-    if (fb.fs) {
-      try {
-        fb.cfgRef = fb.fs.collection('config').doc('system_keys').onSnapshot(
-          snap => { apply(snap.exists ? snap.data() : {}); finish(); },
-          () => finish()
-        );
-      } catch (e) { finish(); }
-    }
+    if (!fb.fs) { markAdminReady(); return; }
 
-    // 2) Realtime Database: config/system_keys (fallback)
-    if (fb.db) {
-      try {
-        const rtdbRef = fb.db.ref('config/system_keys');
-        rtdbRef.on('value', snap => {
-          const v = snap.val();
-          if (v && typeof v === 'object') {
-            const merged = Object.assign({}, ADMIN.fsDoc, {
-              gemini:     ADMIN.fsDoc.gemini     || cleanKey(v.gemini || ''),
-              anthropic:  ADMIN.fsDoc.anthropic  || cleanKey(v.anthropic || ''),
-              openai:     ADMIN.fsDoc.openai     || cleanKey(v.openai || ''),
-              deepseek:   ADMIN.fsDoc.deepseek   || cleanKey(v.deepseek || ''),
-              openrouter: ADMIN.fsDoc.openrouter || cleanKey(v.openrouter || ''),
-              geminiModel: ADMIN.fsDoc.geminiModel || (typeof v.geminiModel === 'string' ? v.geminiModel : '')
-            });
-            apply(merged);
-          }
-          finish();
-        }, () => finish());
-        const origRef = fb.cfgRef;
-        fb.cfgRef = { off: () => { try { rtdbRef.off('value'); } catch (e) {} if (origRef && origRef.unsubscribe) try { origRef.unsubscribe(); } catch (e) {} } };
-      } catch (e) { /* RTDB optional */ }
-    }
+    try {
+      fb.cfgRef = fb.fs.collection('config').doc('system_keys').onSnapshot(
+        snap => {
+          apply(snap.exists ? snap.data() : {});
+          markAdminReady();
+        },
+        (err) => {
+          console.warn('[admin-keys] Firestore read failed:', err && err.message);
+          markAdminReady();
+        }
+      );
+    } catch (e) { markAdminReady(); }
 
-    // Safety: if neither store answered, don't hang forever.
-    setTimeout(finish, 5000);
+    setTimeout(markAdminReady, 2500);
   }
 
   async function initFirebase() {
-    if (!FIREBASE_CONFIG.apiKey) { resolveOwner(); resolveAuth(); return; }
+    if (!FIREBASE_CONFIG.apiKey) { markAdminReady(); resolveAuth(); return; }
     try {
       if (!window.firebase) {
         await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-app-compat.js');
@@ -1971,7 +1933,7 @@ Assist the user with:
       if (FIREBASE_CONFIG.databaseURL && firebase.database) { try { fb.db = firebase.database(app); } catch (e) {} }
       watchOwnerConfig();
       fb.auth.onAuthStateChanged(onAuthChange);
-    } catch (e) { resolveOwner(); resolveAuth(); }
+    } catch (e) { markAdminReady(); resolveAuth(); }
   }
 
   const userKeysRef = uid => fb.fs.collection('users').doc(uid).collection('settings').doc('apiKeys');
@@ -2012,7 +1974,6 @@ Assist the user with:
     const wasIn = !!state.user;
     state.user = user || null;
     renderAccount(user);
-    // FIX #6: close login modal + auto-enter app if signed in and on landing
     if (user) {
       closeModal($('#modalLogin'));
       if (!$('#landing').classList.contains('hidden')) showApp();
@@ -2023,7 +1984,6 @@ Assist the user with:
       if (!$('#app').classList.contains('hidden')) showLanding();
     }
     watchUserKeys(user);
-    watchOwnerConfig();
     resolveAuth();
     updateActiveLabel(); renderProviderCards();
     if (fb.ref) { try { fb.ref.off(); } catch (e) {} fb.ref = null; }
@@ -2088,10 +2048,8 @@ Assist the user with:
     }
     icons();
   }
-  // FIX #5: always showApp() after successful login (not only if landing visible)
   delegate('[data-auth]', 'click', (e, t) => { const a = t.dataset.auth; if (a === 'signout') signOutUser(); else { const all = $$('[data-auth]'); all.forEach(b => b.disabled = true); signIn(a).then(r => { if (r) { closeModal($('#modalLogin')); showApp(); } }).finally(() => all.forEach(b => b.disabled = false)); } });
 
-  /* ---------- Voice ---------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const voice = { rec: null, on: false, convo: false, dict: false, timer: null, idle: 0, speak: !!store.get('sain.voiceSpeak', false), lang: store.get('sain.voiceLang', 'bn-BD'), speaking: false, utt: null };
   function updateVoiceUI() {
@@ -2209,7 +2167,6 @@ Assist the user with:
   });
   updateVoiceUI();
 
-  /* ---------- Autonomous Multi-Agent Pipeline ---------- */
   const AutoAgentSystem = (function () {
     const STEP_COLORS = { 1: 'orange', 2: 'blue', 3: 'cyan' };
     const PATCH_FORMAT = 'Reply with ONLY patch blocks in exactly this format, one per fix:\n<<<<<<< SEARCH\n(exact existing text, short but specific)\n=======\n(fixed text)\n>>>>>>> REPLACE\nSEARCH must match the code character for character. Do NOT rewrite the whole file. If nothing needs fixing, reply exactly: NO_ISSUES';
@@ -2345,7 +2302,6 @@ Assist the user with:
 
     async function executePipeline(userPrompt) {
       if (state.busy) return toast('Please wait for the current task to finish');
-      await waitForAccount();
       if (!hasPersonalCloudKey()) { limitReply(userPrompt); return; }
 
       state.busy = true;
@@ -2399,11 +2355,9 @@ Assist the user with:
     return { execute: executePipeline };
   })();
 
-  /* ---------- Global Actions (FIXED: launch gate) ---------- */
   delegate('[data-action]', 'click', (e, el) => {
     const a = el.dataset.action;
     if (a === 'launch') {
-      // FIX #4: login gate — show modal if not signed in
       if (state.user) showApp();
       else openModal('#modalLogin');
     }
@@ -2426,9 +2380,6 @@ Assist the user with:
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && document.activeElement === editor) { e.preventDefault(); redoCode(); }
   });
 
-  /* =====================================================================
-     MODULE 1: Virtual File System (VFS) + IDE shell
-     ===================================================================== */
   const MAIN_FILE = 'index.html';
   const vfs = {
     files: store.get('sain.vfs', {}) || {},
@@ -2506,7 +2457,6 @@ Assist the user with:
   });
   bind('#btnDelFile', 'click', () => { if (vfs.active !== MAIN_FILE && confirm('Delete ' + vfs.active + '?')) vfs.remove(vfs.active); else if (vfs.active === MAIN_FILE) toast('index.html cannot be deleted'); });
 
-  /* ---------- Terminal panel ---------- */
   const term = {
     out: $('#termOut'), hist: [], hi: 0,
     print(text, cls) { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = text; this.out.appendChild(d); this.out.scrollTop = this.out.scrollHeight; },
@@ -2516,12 +2466,12 @@ Assist the user with:
       line = line.trim(); if (!line) return;
       this.print('$ ' + line, 'text-emerald-400'); this.hist.push(line); this.hi = this.hist.length;
       const [cmd, ...args] = line.split(/\s+/);
-      if (cmd === 'help') return this.print('Built-in: help, ls, cat <file>, clear\nnpm / node / npx commands need the WebContainer (Module 14).');
+      if (cmd === 'help') return this.print('Built-in: help, ls, cat <file>, clear\nnpm / node / npx commands need the WebContainer.');
       if (cmd === 'clear') return this.clear();
       if (cmd === 'ls') return this.print(vfs.list().join('\n'));
       if (cmd === 'cat') return this.print(vfs.exists(args[0]) ? vfs.getFileContent(args[0]) : 'cat: ' + (args[0] || '') + ': No such file', vfs.exists(args[0]) ? '' : 'text-red-400');
       if (this.runner) { try { await this.runner([cmd, ...args]); } catch (err) { this.print(String(err.message || err), 'text-red-400'); } return; }
-      this.print(cmd + ': WebContainer is not booted yet (added in the next chunk).', 'text-amber-400');
+      this.print(cmd + ': WebContainer is not booted.', 'text-amber-400');
     }
   };
   term.print('SAIM Terminal ready. Type "help".', 'text-zinc-500');
@@ -2546,15 +2496,11 @@ Assist the user with:
   delegate('[data-ide-toggle]', 'click', (e, t) => toggleIdePanel(t.dataset.ideToggle));
 
   const ideActions = {};
-  ['deploy', 'pwa', 'security', 'seo', 'history'].forEach(k => { ideActions[k] = () => toast(k + ' action will be connected in the next chunk'); });
   delegate('[data-ide-action]', 'click', (e, t) => (ideActions[t.dataset.ideAction] || (() => {}))());
 
   window.SAIM = { vfs, term, ideActions, toggleIdePanel };
   vfs.renderTree(); toggleIdePanel('explorer');
 
-  /* =====================================================================
-     CHUNK 2: AI agents, Ghost Text, Auto-Heal, Deploy, PWA, History, Node, Sync
-     ===================================================================== */
   const IDE = {
     flags: Object.assign({ ghost: true, heal: true }, store.get('sain.ideFlags', {})),
     byok() { try { return !!isUserByokActive(); } catch (e) { return false; } },
@@ -2604,7 +2550,6 @@ Assist the user with:
   const _setCodeV = setCode;
   setCode = function (code, run, record) { if (record !== false) versions.snap('auto'); _setCodeV(code, run, record); };
 
-  /* ---------- Ghost Text ---------- */
   const ghost = { text: '', t: null, seq: 0, inner: null };
   (function () {
     const w = document.createElement('div'); w.className = 'relative flex flex-1 min-w-0';
@@ -2648,7 +2593,6 @@ Assist the user with:
   editor.addEventListener('scroll', ghostPos); editor.addEventListener('blur', ghostClear);
   editor.addEventListener('click', ghostClear);
 
-  /* ---------- Auto-Heal ---------- */
   const heal = { n: 0, t: null, warned: false };
   window.addEventListener('message', e => {
     if (e.source !== frame.contentWindow || !e.data || !e.data.__sain) return;
@@ -2664,7 +2608,6 @@ Assist the user with:
   });
   editor.addEventListener('input', () => { heal.n = 0; heal.warned = false; });
 
-  /* ---------- Security ---------- */
   const SEC_PROMPT = 'You are a Cybersecurity Expert. Review the HTML/JS for: 1) XSS, 2) external CDN scripts without integrity, 3) hardcoded API keys/secrets, 4) dangerous functions (eval, innerHTML without sanitising). If issues are found, fix them. If secure, reply exactly: SECURE.' + PATCH_FORMAT;
   function staticScan(code) {
     const out = [];
@@ -2684,14 +2627,12 @@ Assist the user with:
     toast(r.applied ? 'Security fixes applied' : 'AI reported issues but no patch could be applied (see terminal)', 4500);
   }
 
-  /* ---------- SEO ---------- */
   async function optimizeAppPerformance() {
     const sys = 'Act as an SEO and web performance expert (like Lighthouse). Add missing meta tags (description, viewport, Open Graph), aria-labels, alt text, loading="lazy" for images, defer for scripts. Do not change the visual design or behaviour.' + PATCH_FORMAT;
     const r = await applyAiOutput(await IDE.ai(sys, state.code));
     toast(r.applied ? 'SEO & performance improvements applied' : 'No changes were applied');
   }
 
-  /* ---------- PWA ---------- */
   function convertToPWA() {
     let c = state.code; if (!c.trim()) return toast('No code');
     if (/rel=["']manifest["']/i.test(c)) return toast('Already a PWA');
@@ -2706,7 +2647,6 @@ Assist the user with:
     setCode(c, false); toast('PWA files added (manifest.json, sw.js). Deploy all files together to install.', 5000);
   }
 
-  /* ---------- Deploy ---------- */
   async function sha1(str) { const b = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
   async function deployNetlify() {
     let tok = sstore.get('sain.netlifyToken', '');
@@ -2727,7 +2667,6 @@ Assist the user with:
     toast('Deployed! URL copied: ' + url, 6000);
   }
 
-  /* ---------- Componentizer ---------- */
   const componentAgent = { prompt: 'You are a Senior Software Architect. Break this monolithic HTML/JS file into modular files (separate .css, .js, optional Web Components via customElements.define). Return ONLY a valid JSON object mapping filename to full file content. It MUST include a rewritten "index.html" that references the other files with <link href="x.css"> and <script src="x.js">.' };
   async function refactorIntoComponents() {
     const raw = IDE.strip(await IDE.ai(componentAgent.prompt, state.code));
@@ -2736,20 +2675,17 @@ Assist the user with:
     vfs.importMap(obj); vfs.open('index.html'); setCode(state.code, true); toast(Object.keys(obj).length + ' files created. Preview inlines them automatically.', 5000);
   }
 
-  /* ---------- Technical Writer ---------- */
   async function generateDocumentation() {
     const sys = 'You are a Technical Writer. From the project files below write a professional, detailed README.md: title & description, features, tech stack, setup & run, folder tree. Return only the markdown.\n\n' + vfs.getAllFilesForAI();
     vfs.updateFile('README.md', IDE.strip(await IDE.ai(sys, 'Generate README.md')), 'markdown'); vfs.open('README.md'); toast('README.md created');
   }
 
-  /* ---------- Backend ---------- */
   async function generateBackend() {
     const req = (prompt('Describe your app/data (e.g. blog with users, posts, comments)') || '').trim(); if (!req) return;
     const sys = 'You are a Database Architect. Generate a production-ready Prisma schema (schema.prisma) with all models, relations (1-N, N-M) and enums. Output ONLY raw Prisma code.';
     vfs.updateFile('schema.prisma', IDE.strip(await IDE.ai(sys, 'Request: ' + req + '\n\nExisting app:\n' + state.code.slice(0, 6000))), 'prisma'); vfs.open('schema.prisma'); toast('schema.prisma created');
   }
 
-  /* ---------- AI Tests ---------- */
   function runInSandbox(code, tests, ms) {
     return new Promise(res => {
       const f = document.createElement('iframe'); f.sandbox = 'allow-scripts'; f.style.display = 'none';
@@ -2774,7 +2710,6 @@ Assist the user with:
     state.errors = r.failures.slice(); updateErrBadge(); state.busy = false; $('#btnFix').click(); state.busy = true;
   }
 
-  /* ---------- Vision ---------- */
   async function visionToCode() {
     const key = state.keys && state.keys.gemini; if (!key) throw new Error('Add a Gemini API key in Keys for image input');
     const file = await new Promise(r => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/png,image/jpeg,image/webp'; i.onchange = () => r(i.files[0]); i.click(); });
@@ -2788,7 +2723,6 @@ Assist the user with:
     setCode(m[1].trim(), true); toast('UI replicated from image');
   }
 
-  /* ---------- WebContainer ---------- */
   const node = {
     wc: null,
     tree() {
@@ -2798,7 +2732,7 @@ Assist the user with:
     },
     async boot() {
       if (this.wc) return;
-      if (!window.crossOriginIsolated) throw new Error('WebContainer needs cross-origin isolation. Serve this page with headers Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp.');
+      if (!window.crossOriginIsolated) throw new Error('WebContainer needs cross-origin isolation.');
       toggleIdePanel('terminal', true); term.print('Booting Node.js environment...', 'text-cyan-300');
       const { WebContainer } = await import('https://esm.sh/@webcontainer/api@1.1.9');
       this.wc = await WebContainer.boot(); await this.wc.mount(this.tree());
@@ -2812,7 +2746,6 @@ Assist the user with:
     }
   };
 
-  /* ---------- Live Sync ---------- */
   const sync = {
     room: null, ref: null, id: uid(), t: null,
     join(room) {
@@ -2853,7 +2786,6 @@ Assist the user with:
   });
   paintFlags(); icons();
 
-  /* ---------- Boot Studio ---------- */
   editor.value = state.code = DEFAULT_CODE;
   updateLineNums(); setView('code'); renderAgentMenu(); setAgent(state.agent);
   renderEmptyState(); renderChatHistory(); renderModels(); updateActiveLabel();
