@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SAIM AI AGENT — Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    fontFamily: { sans: ['Inter','ui-sans-serif','system-ui','sans-serif'], mono: ['JetBrains Mono','ui-monospace','monospace'] },
+    colors: { ink: { 950:'#07070d', 900:'#0b0b14', 850:'#0e0e1a', 800:'#121222', 700:'#19192e' } }
+  } } };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  html, body { height: 100%; background: #07070d; color: #e7e7f0; font-family: Inter, system-ui, sans-serif; }
+  .glass { background: rgba(18,18,32,.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.07); }
+  .inp { width: 100%; padding: .65rem .85rem; border-radius: .75rem; background: #121222; border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 13px; outline: none; transition: border-color .15s; }
+  .inp:focus { border-color: #a855f7; }
+  .pbtn { width: 100%; padding: .75rem; border-radius: .75rem; font-size: 13px; font-weight: 600; background: linear-gradient(90deg,#9333ea,#22d3ee); color: #fff; cursor: pointer; transition: filter .15s; }
+  .pbtn:hover { filter: brightness(1.1); }
+  .grad-text { background: linear-gradient(110deg,#a855f7,#22d3ee 40%,#ec4899 75%,#a855f7); background-size: 220% auto; -webkit-background-clip: text; background-clip: text; color: transparent; }
+</style>
+</head>
+<body class="min-h-screen grid place-items-center p-4 antialiased">
+
+  <div class="w-full max-w-xl glass rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+    <!-- Decorative Glow -->
+    <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-600 rounded-full blur-[80px] opacity-30 pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-cyan-500 rounded-full blur-[80px] opacity-25 pointer-events-none"></div>
+
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-10 h-10 rounded-2xl glass grid place-items-center text-purple-400 font-bold">SA</div>
+      <div>
+        <h1 class="font-extrabold text-lg text-white">SAIM Studio <span class="grad-text">Admin Panel</span></h1>
+        <p class="text-xs text-zinc-400">Manage global AI API keys for Firebase Realtime Database</p>
+      </div>
+    </div>
+
+    <!-- Auth Guard (Login State) -->
+    <div id="authSection" class="mb-6 p-4 rounded-2xl bg-ink-900 border border-white/5 flex items-center justify-between text-xs">
+      <span id="adminStatus" class="text-amber-400">Checking authentication...</span>
+      <button id="btnLogin" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition hidden">Login with Google</button>
+    </div>
+
+    <!-- Admin Form -->
+    <form id="adminForm" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-zinc-300 mb-1">Google Gemini API Key</label>
+        <input type="password" id="adminGemini" class="inp font-mono" placeholder="AIzaSy..." />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-300 mb-1">OpenAI (ChatGPT) API Key</label>
+        <input type="password" id="adminOpenai" class="inp font-mono" placeholder="sk-proj-..." />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-300 mb-1">DeepSeek API Key</label>
+        <input type="password" id="adminDeepseek" class="inp font-mono" placeholder="sk-..." />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-300 mb-1">Anthropic Claude API Key</label>
+        <input type="password" id="adminAnthropic" class="inp font-mono" placeholder="sk-ant-..." />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-300 mb-1">Default Gemini Model</label>
+        <input type="text" id="adminModel" class="inp font-mono" value="gemini-flash-latest" />
+      </div>
+
+      <button type="submit" class="pbtn mt-2">Save Keys to Firebase Database</button>
+    </form>
+
+    <div id="adminToast" class="mt-4 text-center text-xs text-emerald-400 font-medium hidden"></div>
+  </div>
+
+  <!-- Firebase Scripts (Compat v10) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
+  <script>
+    // আপনার মূল অ্যাপের সেইম ফায়ারবেস কনফিগারেশন এখানে দেওয়া হলো
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyA2tXddGxNdcooTlg9JsYNUwzpxxnobE0A",
+      authDomain: "saimaiagent.firebaseapp.com",
+      databaseURL: "https://saimaiagent-default-rtdb.firebaseio.com",
+      projectId: "saimaiagent",
+      storageBucket: "saimaiagent.firebasestorage.app",
+      messagingSenderId: "1063618307954",
+      appId: "1:1063618307954:web:5ff9a4983ed1d1f18e9feb"
+    };
+
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    const $ = s => document.querySelector(s);
+    const statusEl = $('#adminStatus');
+    const loginBtn = $('#btnLogin');
+    const toastEl = $('#adminToast');
+
+    function showToast(msg, isErr) {
+      toastEl.textContent = msg;
+      toastEl.className = `mt-4 text-center text-xs font-medium ${isErr ? 'text-red-400' : 'text-emerald-400'}`;
+      toastEl.classList.remove('hidden');
+      setTimeout(() => toastEl.classList.add('hidden'), 4000);
+    }
+
+    // Auth State Check
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        statusEl.textContent = `Logged in as: ${user.email || user.displayName}`;
+        statusEl.className = 'text-emerald-400';
+        loginBtn.classList.add('hidden');
+        loadKeysFromFirebase();
+      } else {
+        statusEl.textContent = 'Please log in to manage admin keys.';
+        statusEl.className = 'text-amber-400';
+        loginBtn.classList.remove('hidden');
+      }
+    });
+
+    loginBtn.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(e => alert(e.message));
+    });
+
+    // Load existing keys from Realtime Database
+    function loadKeysFromFirebase() {
+      db.ref('config/system_keys').once('value').then(snap => {
+        const data = snap.val() || {};
+        $('#adminGemini').value = data.gemini || '';
+        $('#adminOpenai').value = data.openai || '';
+        $('#adminDeepseek').value = data.deepseek || '';
+        $('#adminAnthropic').value = data.anthropic || '';
+        if (data.geminiModel) $('#adminModel').value = data.geminiModel;
+      });
+    }
+
+    // Save keys to Realtime Database
+    $('#adminForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const payload = {
+        gemini: $('#adminGemini').value.trim(),
+        openai: $('#adminOpenai').value.trim(),
+        deepseek: $('#adminDeepseek').value.trim(),
+        anthropic: $('#adminAnthropic').value.trim(),
+        geminiModel: $('#adminModel').value.trim() || 'gemini-flash-latest'
+      };
+
+      db.ref('config/system_keys').set(payload)
+        .then(() => showToast('Successfully updated API keys in Firebase!'))
+        .catch(err => showToast('Error: ' + err.message, true));
+    });
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>
