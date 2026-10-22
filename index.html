@@ -474,7 +474,7 @@ Assist the user with:
     priority: store.get('sain.priority', ['gemini/gemini-flash-latest', 'anthropic/claude-sonnet-5-5', 'groq/llama-3.3-70b-versatile', 'deepseek/deepseek-chat', 'openai/gpt-4o-mini']),
     active: store.get('sain.active', 'gemini/gemini-flash-latest'),
     keys: store.get('sain.keys', {}),
-    ownerGeminiKey: '', ownerModel: 'gemini-flash-latest', githubLogin: '', user: null,
+    ownerGeminiKey: '', ownerModel: 'gemini-flash-latest', githubLogin: '', user: null, customOn: !!store.get('sain.customOn', false),
     customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
     githubToken: store.get('sain.githubToken', ''),
     agent: store.get('sain.agent', 'coder'),
@@ -490,8 +490,8 @@ Assist the user with:
   const modelById = id => state.models.find(m => m.id === id);
 
   // Checks if the USER has provided any of their own keys (BYOK)
-  const isUserByokActive = () => PROVIDER_ORDER.some(p => p !== 'custom' && typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
-  const hasKeyFor = p => p === 'custom' ? true : (typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
+  const isUserByokActive = () => !!state.customOn || PROVIDER_ORDER.some(p => p !== 'custom' && typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
+  const hasKeyFor = p => p === 'custom' ? !!state.customOn : (typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
   const getEffectiveOwnerKey = () => (state.ownerGeminiKey || '').trim();
 
   function updateActiveLabel() {
@@ -499,7 +499,7 @@ Assist the user with:
     const badge = $('#modeStatusBadge');
     const guardChip = $('#keyGuardChip');
     const keyCountEl = $('#keyCount');
-    const userKeysCount = PROVIDERS.filter(p => hasKeyFor(p.id) && p.id !== 'custom').length;
+    const userKeysCount = PROVIDERS.filter(p => hasKeyFor(p.id)).length;
     
     keyCountEl.textContent = userKeysCount;
 
@@ -589,7 +589,7 @@ Assist the user with:
     ['openai', 'gpt-4o', 'OpenAI GPT-4o'], ['openai', 'gpt-4o-mini', 'OpenAI GPT-4o Mini'],
     ['deepseek', 'deepseek-chat', 'DeepSeek V3'], ['deepseek', 'deepseek-reasoner', 'DeepSeek R1'],
     ['groq', 'llama-3.3-70b-versatile', 'Llama 3.3 70B (Groq)'], ['mistral', 'mistral-large-latest', 'Mistral Large'],
-    ['together', 'meta-llama/Llama-3.3-70B-Instruct-Turbo', 'Llama 3.3 70B (Together)'], ['perplexity', 'sonar', 'Perplexity Sonar'],
+    ['together', 'meta-llama/Llama-3.3-70B-Instruct-Turbo', 'Llama 3.3 70B (Together)'], ['perplexity', 'sonar', 'Perplexity Sonar'], ['perplexity', 'sonar-pro', 'Perplexity Sonar Pro'], ['perplexity', 'sonar-reasoning-pro', 'Perplexity Sonar Reasoning Pro'],
     ['custom', 'llama3', 'Custom / Local Model']
   ].map(([provider, id, name]) => ({ provider, id: provider + '/' + id, name }));
 
@@ -660,7 +660,7 @@ Assist the user with:
   }
   $$('.model-tab').forEach(b => b.addEventListener('click', () => { state.tab = b.dataset.tab; renderModels(); }));
   bind('#modelSearch', 'input', e => { state.search = e.target.value; if (state.search && state.tab === 'priority') state.tab = 'all'; renderModels(); });
-  bind('#btnSyncModels', 'click', async () => { toast('Refreshing models...'); await loadCatalogue(); await syncKeyedProviders(); toast('Models updated'); });
+  bind('#btnSyncModels', 'click', async () => { toast('Refreshing models...'); deadSet.clear(); store.set('sain.dead', []); await loadCatalogue(); await syncKeyedProviders(); toast('Models updated'); });
 
   /* ---------- Key check + model discovery ---------- */
   function shortErr(err) {
@@ -677,7 +677,7 @@ Assist the user with:
   const PREFER = {
     gemini: [/^gemini-[\d.]+-flash$/, /^gemini-flash-latest$/, /^gemini-[\d.]+-flash-lite$/, /^gemini-[\d.]+-pro$/], anthropic: [/sonnet/, /haiku/, /opus/],
     openai: [/^gpt-4o-mini$/, /^gpt-4o$/, /^gpt-[\d.]+-mini$/, /^gpt-/], deepseek: [/chat/, /reasoner/], groq: [/llama-3\.3-70b/, /llama/],
-    mistral: [/large-latest/, /codestral/, /./], together: [/Llama-3\.3-70B/, /Llama/], custom: [/./]
+    mistral: [/large-latest/, /codestral/, /./], perplexity: [/^sonar$/, /sonar-pro$/, /./], together: [/Llama-3\.3-70B/, /Llama/], custom: [/./]
   };
   async function discoverModels(p, key) {
     let res;
@@ -692,7 +692,8 @@ Assist the user with:
     let ids;
     if (p === 'gemini') ids = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace(/^models\//, ''));
     else ids = (Array.isArray(d) ? d : (d.data || d.models || [])).filter(m => !m.type || m.type === 'chat').map(m => m.id || m.name).filter(Boolean);
-    return ids.filter(id => !/embed|moderation|whisper|tts|transcribe|image|dall|audio|realtime|rerank|guard|imagen|veo|live|aqa|gemma/i.test(id));
+    const extra = p === 'openai' ? /babbage|davinci|instruct|codex|search|computer-use|sora/i : null;
+    return ids.filter(id => !/embed|moderation|whisper|tts|transcribe|image|dall|audio|realtime|rerank|guard|imagen|veo|live|aqa|gemma|ocr/i.test(id) && !(extra && extra.test(id)));
   }
   function pickModels(p, ids) {
     const out = [];
@@ -713,8 +714,8 @@ Assist the user with:
     if (!hasKeyFor(ap) || (ap === p && !ids.includes(sub(state.active)))) state.active = state.priority.find(id => id.split('/')[0] === p) || state.active;
   }
   async function syncKeyedProviders() {
-    await Promise.all(PROVIDER_ORDER.filter(p => p !== 'custom' && p !== 'openrouter' && hasKeyFor(p)).map(async p => {
-      try { applyDiscovered(p, await discoverModels(p, state.keys[p].trim())); } catch (e) {}
+    await Promise.all(PROVIDER_ORDER.filter(p => p !== 'openrouter' && hasKeyFor(p)).map(async p => {
+      try { applyDiscovered(p, await discoverModels(p, (state.keys[p] || '').trim())); } catch (e) {}
     }));
     persistModels(); renderModels(); updateActiveLabel();
   }
@@ -909,6 +910,26 @@ Assist the user with:
     }
   }
 
+  /* ---------- Auto chain: every model of every keyed provider ---------- */
+  const deadSet = new Set(store.get('sain.dead', []));
+  const markDead = id => { deadSet.add(id); store.set('sain.dead', Array.from(deadSet)); };
+  const subId = id => id.split('/').slice(1).join('/');
+  function modelRank(p, id) { const i = (PREFER[p] || []).findIndex(r => r.test(id)); return i < 0 ? 99 : i; }
+  function autoChainIds() {
+    const first = (state.active || '').split('/')[0];
+    const order = [first].concat(PROVIDER_ORDER).filter((p, i, a) => a.indexOf(p) === i);
+    const out = [];
+    order.forEach(p => {
+      if (!hasKeyFor(p)) return;
+      state.models.filter(m => m.provider === p && !(p === 'openrouter' && !/:free$/.test(m.id))).map(m => m.id)
+        .sort((a, b) => modelRank(p, subId(a)) - modelRank(p, subId(b)) || b.localeCompare(a, undefined, { numeric: true }))
+        .slice(0, 30).forEach(id => out.push(id));
+    });
+    return out;
+  }
+  const isAccountLevel = (err, p) => ['openai', 'anthropic', 'deepseek', 'mistral', 'together', 'perplexity'].includes(p) && (Number(err.status) === 402 || /insufficient[_ ]quota|credit balance|insufficient balance|payment required|exceeded your current quota/i.test(String(err.message || '')));
+  const isBadKey = err => Number(err.status) === 401 || /api key not valid|invalid api key|incorrect api key|invalid x-api-key/i.test(String(err.message || ''));
+
   /* ---------- Unified Stream Runner (Owner Trial vs User BYOK) ---------- */
   async function runUnifiedStream(rawMessages, opts) {
     opts = opts || {};
@@ -955,9 +976,10 @@ Assist the user with:
     // 2. USER BYOK MODE (User has provided their own keys)
     const extra = (state.settings.systemPrompt || '').trim();
     const system = opts.system || ((AGENTS[state.agent] || AGENTS.coder).prompt + (extra ? '\n\nCustom Instructions:\n' + extra : ''));
-    const ids = [state.active].concat(state.priority).filter((id, i, a) => id && a.indexOf(id) === i);
+    const ids = [state.active].concat(state.priority, autoChainIds()).filter((id, i, a) => id && a.indexOf(id) === i && !deadSet.has(id));
     const chain = ids.map(id => modelById(id) || { id, name: id.split('/').pop(), provider: id.split('/')[0] });
-    const failures = [], dead = [];
+    const failures = [], dead = [], badProv = new Set();
+    let tried = 0;
     
     let lastError = null;
 
@@ -965,7 +987,8 @@ Assist the user with:
 
     for (let i = 0; i < chain.length; i++) {
       const entry = chain[i];
-      if (!hasKeyFor(entry.provider)) continue;
+      if (!hasKeyFor(entry.provider) || badProv.has(entry.provider)) continue;
+      if (++tried > 30) break;
 
       const ctrl = new AbortController();
       state.activeAbort = ctrl;
@@ -979,7 +1002,7 @@ Assist the user with:
         const call = () => entry.provider === 'gemini' ? streamGeminiWithKey(state.keys.gemini.trim(), modelName(entry), messages, system, ctrl.signal, opts.onChunk)
           : entry.provider === 'anthropic' ? streamAnthropic(entry, messages, system, ctrl.signal, opts.onChunk)
           : streamOpenAICompat(entry, messages, system, ctrl.signal, opts.onChunk);
-        const text = await withRetry(call, ctrl.signal, entry.name);
+        const text = tried <= 3 ? await withRetry(call, ctrl.signal, entry.name) : await call();
         if (dead.length) {
           state.priority = state.priority.filter(id => !dead.includes(id));
           if (dead.includes(state.active)) state.active = entry.id;
@@ -995,17 +1018,18 @@ Assist the user with:
         const kind = classifyError(err, err.status);
         lastError = err.name === 'AbortError' ? new Error('Timed out') : err;
         failures.push(entry.name + ': ' + shortErr(lastError));
-        if (Number(err.status) === 404) dead.push(entry.id);
-        const next = chain.slice(i + 1).find(c => hasKeyFor(c.provider));
+        if (Number(err.status) === 404) { dead.push(entry.id); markDead(entry.id); }
+        if (isBadKey(err) || isAccountLevel(err, entry.provider)) badProv.add(entry.provider);
+        const next = chain.slice(i + 1).find(c => hasKeyFor(c.provider) && !badProv.has(c.provider));
         if (next) {
           const warn = `⚠️ ${entry.name} [${kind}] → Handing off to ${next.name}...`;
-          toast(warn, 3500);
+          if (failures.length <= 3) toast(warn, 3500);
           $('#handoffStatusText').textContent = warn;
         }
       }
     }
     $('#handoffStrip').classList.add('hidden');
-    throw failures.length ? new Error('All models failed. ' + failures.join(' | ')) : new Error('No API key found for the selected models. Add a key in Keys.');
+    throw failures.length ? new Error('All ' + failures.length + ' models failed. ' + failures.slice(0, 4).join(' | ') + (failures.length > 4 ? ' | ...' : '')) : new Error('No API key found for the selected models. Add a key in Keys.');
   }
 
   /* ---------- Chat UI ---------- */
@@ -1368,7 +1392,7 @@ Assist the user with:
   function renderProviderCards() {
     const body = $('#providersBody'); body.innerHTML = '';
     PROVIDERS.forEach(p => {
-      const has = hasKeyFor(p.id) && p.id !== 'custom' || (p.id === 'custom' && !!state.keys.custom);
+      const has = hasKeyFor(p.id);
       const b = document.createElement('button'); b.type = 'button'; b.className = 'pcard' + (has ? ' has-key' : '');
       b.innerHTML = `<div class="w-10 h-10 rounded-xl ${p.bg} grid place-items-center shrink-0"><i data-lucide="${p.icon}" class="w-4 h-4 ${p.color}"></i></div><div class="min-w-0 flex-1"><div class="flex items-center gap-2 mb-0.5 flex-wrap"><span class="font-semibold text-xs text-white">${p.name}</span><span class="text-[9px] px-1.5 rounded-full ${has ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${has ? 'Active Key' : 'Add Key'}</span></div><div class="text-[11px] text-zinc-500 truncate">${p.desc}</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-zinc-600 shrink-0"></i>`;
       b.addEventListener('click', () => openProviderInput(p.id)); body.appendChild(b);
@@ -1385,14 +1409,14 @@ Assist the user with:
     $('#customEndpointBox').classList.toggle('hidden', id !== 'custom');
     if (id === 'custom') $('#customEndpointInput').value = state.customEndpoint;
     $('#providerKeyHelp').innerHTML = 'Get your key: <a href="' + esc(p.docs) + '" target="_blank" rel="noopener" class="text-purple-400 underline">' + esc(p.docs) + '</a>';
-    $('#btnRemoveProviderKey').style.display = state.keys[id] ? '' : 'none';
+    $('#btnRemoveProviderKey').style.display = (state.keys[id] || (id === 'custom' && state.customOn)) ? '' : 'none';
     openModal('#modalKey');
   }
   bind('#toggleKeyVisibility', 'click', () => { const i = $('#providerKeyInput'); i.type = i.type === 'password' ? 'text' : 'password'; });
   bind('#btnSaveProviderKey', 'click', async () => {
     if (!curProvider) return;
     const val = $('#providerKeyInput').value.trim();
-    if (curProvider === 'custom') { state.customEndpoint = $('#customEndpointInput').value.trim() || 'http://localhost:11434/v1'; store.set('sain.customEndpoint', state.customEndpoint); }
+    if (curProvider === 'custom') { state.customEndpoint = $('#customEndpointInput').value.trim() || 'http://localhost:11434/v1'; store.set('sain.customEndpoint', state.customEndpoint); state.customOn = true; store.set('sain.customOn', true); }
     if (val) state.keys[curProvider] = val; else if (curProvider !== 'custom') return toast('Key is empty');
     store.set('sain.keys', state.keys); closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Checking key...', 5000);
     const p = curProvider, k = (state.keys[p] || '').trim();
@@ -1404,7 +1428,7 @@ Assist the user with:
     } catch (err) { toast('Key check failed: ' + shortErr(err), 7000); }
   });
   bind('#btnRemoveProviderKey', 'click', () => {
-    if (!curProvider) return; delete state.keys[curProvider]; store.set('sain.keys', state.keys);
+    if (!curProvider) return; delete state.keys[curProvider]; store.set('sain.keys', state.keys); if (curProvider === 'custom') { state.customOn = false; store.set('sain.customOn', false); }
     closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Key removed');
   });
 
