@@ -6,6 +6,7 @@
 <title>SAIM AI AGENT — Autonomous AI Workspace</title>
 <link rel="icon" type="image/png" href="logo.png" />
 <meta name="theme-color" content="#07070d" />
+<meta name="referrer" content="no-referrer" />
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { theme: { extend: {
@@ -36,6 +37,14 @@
   .caret { border-right: 2px solid #22d3ee; padding-right: 2px; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { border-color: transparent; } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  /* Login success badge: small circle, draws a check, fades away on its own */
+  #loginBadge { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 14px); right: 14px; z-index: 96; width: 38px; height: 38px; border-radius: 9999px; display: grid; place-items: center; background: rgba(16,185,129,.16); border: 1px solid rgba(52,211,153,.5); color: #6ee7b7; opacity: 0; pointer-events: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  #loginBadge.show { animation: badgeInOut 2.2s ease both; }
+  #loginBadge path { stroke-dasharray: 24; stroke-dashoffset: 24; }
+  #loginBadge.show path { animation: badgeDraw .5s .15s ease forwards; }
+  @keyframes badgeInOut { 0% { opacity: 0; transform: scale(.6); } 15% { opacity: 1; transform: scale(1); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.08); } }
+  @keyframes badgeDraw { to { stroke-dashoffset: 0; } }
 
   /* Shared form / button / modal styles */
   .inp { width: 100%; padding: .55rem .75rem; border-radius: .75rem; background: #121222; border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 12px; outline: none; transition: border-color .15s; }
@@ -223,7 +232,7 @@
               <button id="btnVoiceMode" type="button" class="ibtn" title="Voice conversation"><i data-lucide="audio-lines" class="w-4 h-4"></i></button>
               <button id="btnSpeak" type="button" class="ibtn" title="Read replies aloud"><i data-lucide="volume-2" class="w-4 h-4"></i></button>
               <button id="btnVoiceLang" type="button" class="text-[10px] font-mono px-1.5 py-1 rounded-lg text-zinc-400 hover:bg-white/10" title="Voice language">EN</button>
-              <span id="keyGuardChip" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 whitespace-nowrap cursor-pointer">Trial Mode · Add Keys</span>
+              <span id="keyGuardChip" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 whitespace-nowrap truncate max-w-[12rem] cursor-pointer hover:text-zinc-200" role="button" tabindex="0">⚡ Active: …</span>
             </div>
             <div class="flex items-center gap-1.5">
               <button id="btnAbortStream" class="hidden px-2.5 py-1.5 rounded-xl bg-red-500/20 text-red-300 text-xs font-medium hover:bg-red-500/30">Stop</button>
@@ -316,6 +325,7 @@
   <div class="mbox fade-in">
     <div class="mhead"><h3 class="font-semibold text-base">Workspace Settings</h3><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div>
     <div class="mbody">
+      <button type="button" data-action="keys" class="w-full flex items-center gap-3 p-3 rounded-2xl text-left bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15"><i data-lucide="key-round" class="w-4 h-4 text-emerald-300 shrink-0"></i><span class="min-w-0"><span class="block text-xs font-semibold text-emerald-200">Personal API Keys</span><span class="block text-[10.5px] text-zinc-400">Gemini, Claude, OpenAI, DeepSeek, OpenRouter… synced to your account and restored on every device. Unlocks unlimited project generation.</span></span></button>
       <div><div class="flex justify-between text-xs mb-1"><label class="font-medium text-zinc-300">Temperature</label><span id="tempValue" class="font-mono text-cyan-400">0.40</span></div><input id="settingTemp" type="range" min="0" max="1" step="0.05" class="w-full accent-cyan-400" /></div>
       <div class="grid grid-cols-2 gap-3">
         <div><label class="lbl">Max Output Tokens</label><input id="settingMaxTokens" type="number" step="256" class="inp font-mono" /></div>
@@ -380,33 +390,24 @@
     </div>
     <div class="mbody bg-ink-950 !p-5 !gap-4">
       <div id="step-1" class="flex items-start gap-3 opacity-40 transition-opacity duration-300">
-        <div class="step-icon w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i></div>
-        <div><div class="text-xs font-semibold text-zinc-200">1. Orchestrating (Gemini)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Planning design and logic prompts...</div></div>
+        <div class="step-icon w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="palette" class="w-3.5 h-3.5"></i></div>
+        <div><div class="text-xs font-semibold text-zinc-200">1. UI/UX &amp; Structure (Claude)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">HTML layout, Tailwind CSS, components. Falls back to Gemini.</div></div>
       </div>
 
       <div id="step-2" class="flex items-start gap-3 opacity-40 transition-opacity duration-300">
-        <div class="step-icon w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="palette" class="w-3.5 h-3.5"></i></div>
-        <div><div class="text-xs font-semibold text-zinc-200">2. UI/UX Designing (Claude)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Building structure with Tailwind CSS...</div></div>
+        <div class="step-icon w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="file-json" class="w-3.5 h-3.5"></i></div>
+        <div><div class="text-xs font-semibold text-zinc-200">2. Logic &amp; Interactivity (Gemini)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Full JavaScript logic and event wiring.</div></div>
       </div>
 
       <div id="step-3" class="flex items-start gap-3 opacity-40 transition-opacity duration-300">
-        <div class="step-icon w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="file-json" class="w-3.5 h-3.5"></i></div>
-        <div><div class="text-xs font-semibold text-zinc-200">3. Logic Implementation (Gemini)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Writing JavaScript & wiring events...</div></div>
-      </div>
-
-      <div id="step-4" class="flex items-start gap-3 opacity-40 transition-opacity duration-300">
         <div class="step-icon w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="bug" class="w-3.5 h-3.5"></i></div>
-        <div><div class="text-xs font-semibold text-zinc-200">4. Code Auditing (DeepSeek)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Checking for bugs and optimizing...</div></div>
-      </div>
-
-      <div id="step-5" class="flex items-start gap-3 opacity-40 transition-opacity duration-300">
-        <div class="step-icon w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 grid place-items-center shrink-0 mt-0.5"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i></div>
-        <div><div class="text-xs font-semibold text-zinc-200">5. Final QA (Gemini)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Final bug check & formatting...</div></div>
+        <div><div class="text-xs font-semibold text-zinc-200">3. Verification (DeepSeek)</div><div class="step-desc text-[10px] text-zinc-500 mt-0.5">Syntax and logic check. Falls back to OpenRouter, then Gemini.</div></div>
       </div>
     </div>
   </div>
 </div>
 
+<div id="loginBadge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
 <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-[95] pointer-events-none opacity-0 translate-y-3 transition-all duration-300 px-4 py-2 rounded-xl glass text-xs font-medium shadow-2xl max-w-[90vw] text-center"></div>
 
 <!-- ================= JAVASCRIPT LOGIC ================= -->
@@ -427,10 +428,25 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   };
 
+  // ---------- Security helpers: sanitising, masking, redaction ----------
+  const sstore = {
+    get(k, d) { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+  // API key: strip whitespace/control chars, accept only characters real provider keys use.
+  const cleanKey = raw => { const k = String(raw == null ? '' : raw).replace(/[\s\u0000-\u001f\u007f]/g, ''); return /^[\w.~+\/=:\-]{8,400}$/.test(k) ? k : ''; };
+  // Show only the last 4 characters of a key in the UI.
+  const maskKey = k => { k = String(k || ''); return k.length > 8 ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' + k.slice(-4) : '\u2022\u2022\u2022\u2022'; };
+  // Free text: drop control characters (keeps \n and \t) and cap the length.
+  const sanitizeText = (s, max) => String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').slice(0, max || 20000);
+  const safeUrl = u => { try { const x = new URL(String(u)); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href.replace(/\/+$/, '') : ''; } catch (e) { return ''; } };
+  // Never let key-looking strings reach the screen (provider error bodies can echo them).
+  const redact = s => String(s == null ? '' : s).replace(/AIza[\w-]{20,}/g, 'AIza\u2026').replace(/sk-[\w-]{12,}/g, 'sk-\u2026').replace(/gsk_[\w-]{12,}/g, 'gsk_\u2026').replace(/pplx-[\w-]{12,}/g, 'pplx-\u2026');
+
   let toastTimer;
   function toast(msg, ms) {
     const t = $('#toast'); if (!t) return;
-    t.innerHTML = msg;
+    t.textContent = redact(msg);
     t.classList.remove('opacity-0', 'translate-y-3');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-3'), ms || 2500);
@@ -513,7 +529,7 @@ VOICE MODE: the user is talking by voice. Keep plain-text answers short and conv
 Greet the user warmly and ask how you can help.
 RULES FOR TRIAL MODE:
 1. You may answer questions about software, advise on tech stacks, explain features, and give short snippets (max 10 lines).
-2. If the user asks you to build, write, or generate a full application, complete website, or large code project: DO NOT output any complete HTML/code block. Politely explain that building full projects, running live previews and using the multi-model engine requires their own API key, and ask them to add a Gemini, Claude, OpenAI, Groq or DeepSeek key with the Keys button.
+2. If the user asks you to build, write, or generate a full application, complete website, or large code project: DO NOT output any complete HTML/code block. Reply with exactly: "To unlock unlimited project generation, please add your personal API Key in Settings."
 3. Always keep a polite, respectful and helpful tone.
 4. Reply in the language the user writes in.`;
 
@@ -529,10 +545,10 @@ Assist the user with:
     models: [],
     priority: store.get('sain.priority', []),
     active: store.get('sain.active', 'gemini/gemini-flash-latest'),
-    keys: store.get('sain.keys', {}),
-    ownerGeminiKey: '', ownerModel: 'gemini-flash-latest', githubLogin: '', user: null, customOn: !!store.get('sain.customOn', false),
+    keys: {},   // personal keys: memory only. The source of truth is Firestore users/{uid}/settings/apiKeys
+    githubLogin: '', user: null, customOn: !!store.get('sain.customOn', false),
     customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
-    githubToken: store.get('sain.githubToken', ''),
+    githubToken: sstore.get('sain.githubToken', ''),
     agent: store.get('sain.agent', 'coder'),
     settings: Object.assign({ systemPrompt: '', temperature: 0.4, maxTokens: 8192, timeoutSec: 90, corsProxy: '' }, store.get('sain.settings', {})),
     tab: 'priority', search: '', messages: [], attachments: [], busy: false,
@@ -544,36 +560,80 @@ Assist the user with:
     autoMode: store.get('sain.autoMode', true), priceFilter: 'all'
   };
   let resolveOwner; const ownerReady = new Promise(r => { resolveOwner = r; });
+  let resolveAuth; const authReady = new Promise(r => { resolveAuth = r; });
+  let keysReady = Promise.resolve();
+  // Resolves once Firebase told us who is signed in and (if signed in) their saved keys were restored.
+  const waitForAccount = () => Promise.race([authReady.then(() => keysReady), new Promise(r => setTimeout(r, 6000))]);
+
+  // ---------- Admin / default system keys ----------
+  // Fetched from Firestore config/system_keys. They live only in this closure: never on `state`, never in the DOM,
+  // never in localStorage and never logged. NOTE: anything a browser can use, a determined visitor can extract with
+  // devtools. For real secrecy move these calls behind a serverless proxy (see the Firestore rules comment below).
+  const ADMIN = { keys: {}, geminiModel: 'gemini-flash-latest', fsDoc: {}, legacy: {} };
+  const TRIAL_ORDER = ['gemini', 'deepseek', 'openai', 'openrouter', 'anthropic'];
+  const TRIAL_NAMES = { gemini: 'Gemini Flash', deepseek: 'DeepSeek Chat', openai: 'GPT-4o mini', openrouter: 'OpenRouter Auto', anthropic: 'Claude Haiku' };
+  const TRIAL_MODELS = { deepseek: 'deepseek-chat', openai: 'gpt-4o-mini', openrouter: 'openrouter/auto', anthropic: 'claude-haiku-5-5' };
+  const TRIAL_MAX_TOKENS = 900, TRIAL_MAX_HISTORY = 6, TRIAL_MAX_CODE_LINES = 14;
+  const TRIAL_LIMIT_MSG = 'To unlock unlimited project generation, please add your personal API Key in Settings.';
+  // Free tier allows chat, explanations and short snippets; full apps / projects need a personal key.
+  const HEAVY_RE = [
+    /\b(build|create|make|generate|develop|code|write|design|scaffold)\b[^.?!\n]{0,60}\b(full|complete|entire|whole|multi[- ]?(page|file)|production|fully[- ]functional)\b/i,
+    /\b(build|create|make|generate|develop|code|write|design|scaffold)\b[^.?!\n]{0,60}\b(web ?app|web ?site|website|application|app|dashboard|landing page|game|project|platform|portfolio|e-?commerce|clone|saas|crm)\b/i,
+    /\b(multi[- ]?file|project builder|multi[- ]?agent|auto system)\b/i
+  ];
+  const isHeavyRequest = t => { t = String(t || '').slice(0, 4000); return HEAVY_RE.some(r => r.test(t)); };
+  function limitTrialOutput(text) {
+    let trimmed = false;
+    const out = String(text).replace(/```[\s\S]*?(?:```|$)/g, blk => { if (blk.split('\n').length > TRIAL_MAX_CODE_LINES) { trimmed = true; return ''; } return blk; });
+    return trimmed ? { text: (out.trim() + '\n\n' + TRIAL_LIMIT_MSG).trim(), trimmed } : { text, trimmed };
+  }
+  function rebuildAdmin() {
+    const src = ADMIN.fsDoc || {}, leg = ADMIN.legacy || {}, next = {};
+    ['gemini', 'anthropic', 'openai', 'deepseek', 'openrouter'].forEach(p => {
+      const k = cleanKey(src[p] || (p === 'anthropic' ? src.claude : '') || (p === 'gemini' ? src.geminiKey : '') || leg[p] || '');
+      if (k) next[p] = k;
+    });
+    ADMIN.keys = next;
+    const m = String(src.geminiModel || src.model || leg.model || '').trim();
+    if (/^[\w.\-]{3,60}$/.test(m)) ADMIN.geminiModel = m;
+    updateActiveLabel();
+  }
+  const hasPersonalCloudKey = () => PROVIDER_ORDER.some(p => p !== 'custom' && hasKeyFor(p));
   const modelById = id => state.models.find(m => m.id === id);
 
   // Checks if the USER has provided any of their own keys (BYOK)
   const isUserByokActive = () => !!state.customOn || PROVIDER_ORDER.some(p => p !== 'custom' && typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
   const hasKeyFor = p => p === 'custom' ? !!state.customOn : (typeof state.keys[p] === 'string' && state.keys[p].trim().length > 0);
-  const getEffectiveOwnerKey = () => (state.ownerGeminiKey || '').trim();
 
-  function updateActiveLabel() {
-    const el = $('#activeModelLabel');
-    const badge = $('#modeStatusBadge');
-    const guardChip = $('#keyGuardChip');
-    const keyCountEl = $('#keyCount');
-    const userKeysCount = PROVIDERS.filter(p => hasKeyFor(p.id)).length;
-    
-    keyCountEl.textContent = userKeysCount;
-
+  function activeIndicatorText() {
     if (isUserByokActive()) {
-      const m = modelById(state.active);
-      el.textContent = state.autoMode ? 'Auto System · newest first' : (m ? m.name : 'BYOK Active');
+      if (!state.autoMode) { const m = modelById(state.active); return m ? m.name : 'Your model'; }
+      for (const id of state.priority.concat(autoChainIds())) { const m = modelById(id); if (m && hasKeyFor(m.provider)) return m.name; }
+      const p = PROVIDERS.find(x => hasKeyFor(x.id)); return p ? p.name : 'Your key';
+    }
+    const tp = TRIAL_ORDER.find(p => ADMIN.keys[p]);
+    return tp ? TRIAL_NAMES[tp] + ' (free)' : 'Free tier';
+  }
+  function updateActiveLabel() {
+    const el = $('#activeModelLabel'), badge = $('#modeStatusBadge'), chip = $('#keyGuardChip'), keyCountEl = $('#keyCount');
+    if (!el || !badge) return;
+    const n = PROVIDERS.filter(p => hasKeyFor(p.id)).length;
+    if (keyCountEl) keyCountEl.textContent = n;
+    const label = activeIndicatorText();
+    if (isUserByokActive()) {
+      el.textContent = state.autoMode ? 'Auto System \u00b7 newest first' : label;
       el.style.color = '#34d399';
-      badge.textContent = `● BYOK Mode (${userKeysCount} Keys)`;
+      badge.textContent = '\u25cf Personal keys (' + n + ')';
       badge.className = 'text-[10px] text-emerald-400 mt-0.5';
-      guardChip.classList.add('hidden');
     } else {
-      el.textContent = 'SAIM AI AGENT · Trial Mode';
+      el.textContent = 'SAIM AI AGENT \u00b7 Free tier';
       el.style.color = '#fbbf24';
-      badge.textContent = '● Free Trial';
+      badge.textContent = '\u25cf Free tier';
       badge.className = 'text-[10px] text-amber-300 mt-0.5';
-      guardChip.classList.remove('hidden');
-      guardChip.textContent = 'Trial Mode · Add Keys';
+    }
+    if (chip) {
+      chip.textContent = '\u26a1 Active: ' + label;
+      chip.title = isUserByokActive() ? 'Personal keys active \u2014 click to manage' : 'Free tier \u2014 click to add your personal API key';
     }
   }
 
@@ -592,8 +652,8 @@ Assist the user with:
 
   /* ---------- Screens ---------- */
   function showApp() {
-    if (!state.user) { openModal('#modalLogin'); return; }
-    $('#landing').classList.add('hidden');
+    $('#landing').classList.add('hidden');   // guests may chat on the free tier; sign-in is optional
+    
     const app = $('#app'); app.classList.remove('hidden'); app.classList.add('flex');
     setPane(state.pane); icons();
   }
@@ -774,7 +834,7 @@ Assist the user with:
     const j = m.indexOf('{');
     if (j >= 0) { try { const o = JSON.parse(m.slice(j)); const d = (o.error && (o.error.message || (typeof o.error === 'string' ? o.error : ''))) || o.message || ''; m = m.slice(0, j).trim() + ' ' + d; } catch (e) {} }
     if (/failed to fetch|networkerror|load failed/i.test(m)) m = 'Request blocked (network or CORS). Check your connection or set a CORS proxy in Settings.';
-    return m.replace(/\s+/g, ' ').trim().slice(0, 220);
+    return redact(m.replace(/\s+/g, ' ').trim()).slice(0, 220);
   }
   const MODEL_LIST = {
     openai: 'https://api.openai.com/v1/models', deepseek: 'https://api.deepseek.com/models', groq: 'https://api.groq.com/openai/v1/models',
@@ -787,7 +847,7 @@ Assist the user with:
   };
   async function discoverModels(p, key) {
     let res;
-    if (p === 'gemini') res = await fetch(applyProxy('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key)));
+    if (p === 'gemini') res = await fetch(applyProxy('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200'), { headers: { 'x-goog-api-key': key } });
     else if (p === 'anthropic') res = await fetch(applyProxy('https://api.anthropic.com/v1/models?limit=100'), { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' } });
     else if (p === 'custom') res = await fetch(applyProxy((state.customEndpoint || '').replace(/\/+$/, '').replace(/\/chat\/completions$/, '') + '/models'), { headers: key ? { Authorization: 'Bearer ' + key } : {} });
     else if (MODEL_LIST[p]) res = await fetch(applyProxy(MODEL_LIST[p]), { headers: { Authorization: 'Bearer ' + key } });
@@ -845,8 +905,9 @@ Assist the user with:
 
   const modelName = entry => entry.id.split('/').slice(1).join('/') || entry.id;
 
-  async function streamOpenAICompat(entry, messages, system, signal, onChunk) {
-    const key = (state.keys[entry.provider] || (entry.provider === 'custom' ? 'none' : '')).trim();
+  async function streamOpenAICompat(entry, messages, system, signal, onChunk, ov) {
+    ov = ov || {};
+    const key = (ov.key || state.keys[entry.provider] || (entry.provider === 'custom' ? 'none' : '')).trim();
     if (!key) throw new Error('Missing API key for ' + entry.name);
     const headers = { 'Content-Type': 'application/json' };
     if (key !== 'none') headers.Authorization = 'Bearer ' + key;
@@ -861,7 +922,7 @@ Assist the user with:
         model: modelName(entry),
         messages: [{ role: 'system', content: system }].concat(messages),
         temperature: Number(state.settings.temperature),
-        max_tokens: Number(state.settings.maxTokens),
+        max_tokens: ov.maxTokens || Number(state.settings.maxTokens),
         stream: true
       })
     });
@@ -896,18 +957,18 @@ Assist the user with:
     return full;
   }
 
-  async function streamGeminiWithKey(keyToUse, modelId, messages, system, signal, onChunk) {
+  async function streamGeminiWithKey(keyToUse, modelId, messages, system, signal, onChunk, ov) {
     if (!keyToUse) throw new Error('Missing Google Gemini API key');
-    const rawEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keyToUse)}`;
+    const rawEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:streamGenerateContent?alt=sse`;
     const url = applyProxy(rawEndpoint);
     
     const res = await fetch(url, {
       method: 'POST', signal,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keyToUse },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-        generationConfig: { temperature: Number(state.settings.temperature), maxOutputTokens: Math.max(Number(state.settings.maxTokens) || 8192, 32768) }
+        generationConfig: { temperature: Number(state.settings.temperature), maxOutputTokens: (ov && ov.maxTokens) || Math.max(Number(state.settings.maxTokens) || 8192, 32768) }
       })
     });
     if (!res.ok) {
@@ -942,8 +1003,9 @@ Assist the user with:
     return full;
   }
 
-  async function streamAnthropic(entry, messages, system, signal, onChunk) {
-    const key = (state.keys.anthropic || '').trim();
+  async function streamAnthropic(entry, messages, system, signal, onChunk, ov) {
+    ov = ov || {};
+    const key = (ov.key || state.keys.anthropic || '').trim();
     if (!key) throw new Error('Missing Anthropic API key');
     const url = applyProxy('https://api.anthropic.com/v1/messages');
     const res = await fetch(url, {
@@ -956,7 +1018,7 @@ Assist the user with:
       },
       body: JSON.stringify({
         model: modelName(entry), system, messages,
-        max_tokens: Math.min(32000, Math.max(16000, Number(state.settings.maxTokens) || 0)),
+        max_tokens: ov.maxTokens || Math.min(32000, Math.max(16000, Number(state.settings.maxTokens) || 0)),
         temperature: Math.min(1, Math.max(0, Number(state.settings.temperature))),
         stream: true
       })
@@ -1039,44 +1101,61 @@ Assist the user with:
   /* ---------- Unified Stream Runner (Owner Trial vs User BYOK) ---------- */
   async function runUnifiedStream(rawMessages, opts) {
     opts = opts || {};
+    await waitForAccount();   // make sure saved personal keys were restored before choosing free vs personal mode
     const messages = cleanMessages(rawMessages);
     state.stopFlag = false; state.lastFinish = '';
 
-    // 1. OWNER TRIAL MODE (user has not entered any key)
+    // 1. FREE TIER: no personal key -> admin fallback keys with hard limits (short chat, small snippets only)
     if (!isUserByokActive()) {
       await Promise.race([ownerReady, new Promise(r => setTimeout(r, 6000))]);
-      const ownerKey = getEffectiveOwnerKey();
-      if (!ownerKey) throw new Error('SAIM AI AGENT is unavailable right now. Please try again later or add your own API key.');
+      const lastUser = messages.slice().reverse().find(m => m.role === 'user');
+      if (!opts.system && lastUser && isHeavyRequest(lastUser.content))
+        return { text: TRIAL_LIMIT_MSG, entry: { name: 'SAIM AI AGENT' }, isTrial: true, limited: true };
+
+      const order = TRIAL_ORDER.filter(p => ADMIN.keys[p]);
+      if (!order.length) throw new Error('The free tier is unavailable right now. Please try again later or add your personal API Key in Settings.');
+      const tm = messages.slice(-TRIAL_MAX_HISTORY).map(m => ({ role: m.role, content: String(m.content).slice(0, 2500) }));
+      while (tm.length && tm[0].role !== 'user') tm.shift();
+      const system = opts.system || OWNER_TRIAL_PROMPT;
 
       $('#handoffStrip').classList.remove('hidden');
-      $('#handoffStatusText').textContent = 'SAIM AI AGENT (Trial / Support Mode)...';
-
-      const ctrl = new AbortController();
-      state.activeAbort = ctrl;
-      const timer = setTimeout(() => ctrl.abort(), Math.max(10, Number(state.settings.timeoutSec) || 90) * 1000);
-      try {
-        const system = opts.system || OWNER_TRIAL_PROMPT;
+      for (const p of order) {
+        const ctrl = new AbortController();
+        state.activeAbort = ctrl;
+        const timer = setTimeout(() => ctrl.abort(), Math.max(10, Number(state.settings.timeoutSec) || 90) * 1000);
+        const name = TRIAL_NAMES[p];
+        $('#handoffStatusText').textContent = 'Free tier \u00b7 ' + name + '...';
+        const ov = { key: ADMIN.keys[p], maxTokens: TRIAL_MAX_TOKENS };
         const onTrial = (chunk, acc) => {
-          if (opts.onChunk) opts.onChunk(chunk, acc, { name: 'SAIM AI AGENT' });
-          $('#tokensIndicator').textContent = `~${Math.round(acc.length / 4)} tok`;
+          if (opts.onChunk) opts.onChunk(chunk, acc, { name });
+          $('#tokensIndicator').textContent = '~' + Math.round(acc.length / 4) + ' tok';
         };
-        let text, last404 = null;
-        for (const mid of Array.from(new Set([state.ownerModel, 'gemini-flash-latest']))) {
-          try { text = await withRetry(() => streamGeminiWithKey(ownerKey, mid, messages, system, ctrl.signal, onTrial), ctrl.signal, 'SAIM AI AGENT'); break; }
-          catch (e) { if (Number(e.status) !== 404) throw e; last404 = e; }
+        try {
+          let text;
+          if (p === 'gemini') {
+            let last404 = null;
+            for (const mid of Array.from(new Set([ADMIN.geminiModel, 'gemini-flash-latest']))) {
+              try { text = await withRetry(() => streamGeminiWithKey(ov.key, mid, tm, system, ctrl.signal, onTrial, ov), ctrl.signal, name); break; }
+              catch (e) { if (Number(e.status) !== 404) throw e; last404 = e; }
+            }
+            if (text === undefined) throw last404;
+          } else {
+            const entry = { provider: p, id: p + '/' + TRIAL_MODELS[p], name };
+            text = await withRetry(() => p === 'anthropic' ? streamAnthropic(entry, tm, system, ctrl.signal, onTrial, ov) : streamOpenAICompat(entry, tm, system, ctrl.signal, onTrial, ov), ctrl.signal, name);
+          }
+          if (!text || !text.trim()) throw new Error('Empty response');
+          clearTimeout(timer);
+          const lim = limitTrialOutput(text);
+          $('#handoffStrip').classList.add('hidden');
+          return { text: lim.text, entry: { name }, isTrial: true, limited: lim.trimmed };
+        } catch (err) {
+          clearTimeout(timer);
+          if (state.stopFlag) { $('#handoffStrip').classList.add('hidden'); throw new Error('Generation cancelled'); }
+          // try the next admin provider
         }
-        if (text === undefined) throw last404;
-        if (!text.trim()) throw new Error('Empty response from SAIM AI AGENT. Please try again.');
-        clearTimeout(timer);
-        $('#handoffStatusText').textContent = 'Completed (SAIM AI AGENT)';
-        setTimeout(() => $('#handoffStrip').classList.add('hidden'), 2500);
-        return { text, entry: { name: 'SAIM AI AGENT' }, isTrial: true };
-      } catch (err) {
-        clearTimeout(timer);
-        $('#handoffStrip').classList.add('hidden');
-        if (state.stopFlag) throw new Error('Generation cancelled');
-        throw err;
       }
+      $('#handoffStrip').classList.add('hidden');
+      throw new Error('The free tier is busy right now. Please try again shortly or add your personal API Key in Settings.');
     }
 
     // 2. USER BYOK MODE
@@ -1138,7 +1217,6 @@ Assist the user with:
         const next = !manual && chain.slice(i + 1).find(c => hasKeyFor(c.provider) && !badProv.has(c.provider));
         if (next) {
           const warn = `⚠️ ${entry.name} [${kind}] → ${next.name}`;
-          if (failures.length <= 3) toast(warn, 2500);
           $('#handoffStatusText').textContent = warn;
         }
       }
@@ -1265,10 +1343,10 @@ Assist the user with:
   async function sendMessage() {
     if (state.busy) return;
     voice.dict = false; stopListening(); stopSpeaking();
-    let text = promptInput.value.trim();
+    let text = sanitizeText(promptInput.value, 20000).trim();
     if (!text && !state.attachments.length) return;
     if (!state.currentChatId) newChatSession();
-    if (state.attachments.length) text += '\n\n' + state.attachments.map(a => `[Attached: ${a.name}]\n\`\`\`\n${a.content.slice(0, 8000)}\n\`\`\``).join('\n');
+    if (state.attachments.length) text += '\n\n' + state.attachments.map(a => `[Attached: ${sanitizeText(a.name, 120)}]\n\`\`\`\n${sanitizeText(a.content, 8000)}\n\`\`\``).join('\n');
     promptInput.value = ''; autoGrow(); state.attachments = []; renderAttachments();
     state.messages.push({ role: 'user', content: text }); addMessage('user', text); saveCurrentChat();
     
@@ -1287,7 +1365,8 @@ Assist the user with:
         }
       });
       bubble.classList.remove('streaming-cursor');
-      const meta = res.isTrial ? 'SAIM AI AGENT (Trial Mode)' : ((AGENTS[state.agent] || AGENTS.coder).name + ' · ' + res.entry.name);
+      if (res.isTrial) contentEl.innerHTML = fmt(res.text);   // shows the limit message instead of any streamed code
+      const meta = res.isTrial ? 'Free tier · ' + res.entry.name : ((AGENTS[state.agent] || AGENTS.coder).name + ' · ' + res.entry.name);
       const metaDiv = document.createElement('div');
       metaDiv.className = 'text-[10px] text-zinc-500 font-mono pt-1.5';
       metaDiv.textContent = meta;
@@ -1297,16 +1376,16 @@ Assist the user with:
       saveCurrentChat();
 
       // Put code / patches into the editor and preview BEFORE anything else (voice must never block this)
-      try { await applyAiOutput(res.text); } catch (e) { toast('Could not apply code: ' + e.message, 4000); }
+      // The free tier never writes into the editor: it only gives chat answers and short snippets.
+      try { if (!res.isTrial) { const ap = await applyAiOutput(res.text); if (ap && ap.applied) saveAppSnapshot(text, state.code); } } catch (e) { toast('Could not apply code: ' + e.message, 4000); }
       if (state.lastFinish === 'MAX_TOKENS') toast('The reply was cut off by the output limit', 4000);
       voiceAfterReply(res.text);
     } catch (err) {
       bubble.classList.remove('streaming-cursor');
-      const msg = '⚠️ ' + err.message;
+      const msg = '⚠️ ' + redact(err.message);
       contentEl.innerHTML = `<span class="text-amber-400 font-medium">${esc(msg)}</span>`;
       state.messages.push({ role: 'assistant', content: msg, error: true });
       saveCurrentChat();
-      toast('Notice: ' + err.message, 3500);
       if (voice.convo) setTimeout(() => { if (voice.convo && !voice.on && !state.busy) startListening(); }, 600);
     } finally {
       state.busy = false;
@@ -1318,6 +1397,21 @@ Assist the user with:
 
   /* ---------- Sessions ---------- */
   function persistChats() { store.set('sain.chats', state.chats.slice(0, 20)); }
+  // Generated web-app history lives in this browser only (no Firestore reads/writes).
+  function saveAppSnapshot(title, code) {
+    if (!code || !String(code).trim()) return;
+    const list = store.get('sain.apps', []);
+    list.unshift({ id: uid(), title: String(title || 'App').slice(0, 60), ts: Date.now(), code: String(code) });
+    let out = list.slice(0, 15);
+    while (out.length > 1 && JSON.stringify(out).length > 1500000) out.pop();
+    if (!store.set('sain.apps', out)) store.set('sain.apps', out.slice(0, 3));
+  }
+  function limitReply(userText) {
+    if (!state.currentChatId) newChatSession();
+    state.messages.push({ role: 'user', content: userText }); addMessage('user', userText);
+    state.messages.push({ role: 'assistant', content: TRIAL_LIMIT_MSG, meta: 'Free tier' }); addMessage('assistant', TRIAL_LIMIT_MSG, 'Free tier');
+    saveCurrentChat();
+  }
   function newChatSession() {
     const chat = { id: uid(), title: 'New App Session', createdAt: Date.now(), messages: [] };
     state.chats.unshift(chat); state.currentChatId = chat.id; state.messages = [];
@@ -1572,8 +1666,9 @@ Assist the user with:
     const body = $('#providersBody'); body.innerHTML = '';
     PROVIDERS.forEach(p => {
       const has = hasKeyFor(p.id);
+      const tail = state.keys[p.id] ? ' \u00b7 ' + maskKey(state.keys[p.id]) : '';
       const b = document.createElement('button'); b.type = 'button'; b.className = 'pcard' + (has ? ' has-key' : '');
-      b.innerHTML = `<div class="w-10 h-10 rounded-xl ${p.bg} grid place-items-center shrink-0"><i data-lucide="${p.icon}" class="w-4 h-4 ${p.color}"></i></div><div class="min-w-0 flex-1"><div class="flex items-center gap-2 mb-0.5 flex-wrap"><span class="font-semibold text-xs text-white">${p.name}</span><span class="text-[9px] px-1.5 rounded-full ${has ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${has ? 'Active Key' : 'Add Key'}</span></div><div class="text-[11px] text-zinc-500 truncate">${p.desc}</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-zinc-600 shrink-0"></i>`;
+      b.innerHTML = `<div class="w-10 h-10 rounded-xl ${p.bg} grid place-items-center shrink-0"><i data-lucide="${p.icon}" class="w-4 h-4 ${p.color}"></i></div><div class="min-w-0 flex-1"><div class="flex items-center gap-2 mb-0.5 flex-wrap"><span class="font-semibold text-xs text-white">${p.name}</span><span class="text-[9px] px-1.5 rounded-full font-mono ${has ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${has ? 'Active' + esc(tail) : 'Add Key'}</span></div><div class="text-[11px] text-zinc-500 truncate">${p.desc}</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-zinc-600 shrink-0"></i>`;
       b.addEventListener('click', () => openProviderInput(p.id)); body.appendChild(b);
     });
     icons();
@@ -1584,31 +1679,47 @@ Assist the user with:
   function openProviderInput(id) {
     const p = providerOf(id); curProvider = id;
     $('#inputTitle').textContent = p.name; $('#inputSubtitle').textContent = p.desc;
-    const inp = $('#providerKeyInput'); inp.value = state.keys[id] || ''; inp.placeholder = p.hint; inp.type = 'password';
+    const inp = $('#providerKeyInput');
+    inp.value = '';   // the saved key is never put back into the field; only its last 4 characters are shown
+    inp.placeholder = state.keys[id] ? maskKey(state.keys[id]) + '  (saved \u2014 paste a new key to replace)' : p.hint;
+    inp.type = 'password';
     $('#customEndpointBox').classList.toggle('hidden', id !== 'custom');
     if (id === 'custom') $('#customEndpointInput').value = state.customEndpoint;
-    $('#providerKeyHelp').innerHTML = 'Get your key: <a href="' + esc(p.docs) + '" target="_blank" rel="noopener" class="text-purple-400 underline">' + esc(p.docs) + '</a>';
+    $('#providerKeyHelp').innerHTML = 'Get your key: <a href="' + esc(p.docs) + '" target="_blank" rel="noopener noreferrer" class="text-purple-400 underline">' + esc(p.docs) + '</a>' +
+      (state.user ? '<div class="mt-1 text-emerald-400/80">Saved to your account and restored on every device you sign in on.</div>' : '<div class="mt-1 text-amber-300/90">Sign in to save keys to your account.</div>');
     $('#btnRemoveProviderKey').style.display = (state.keys[id] || (id === 'custom' && state.customOn)) ? '' : 'none';
     openModal('#modalKey');
   }
   bind('#toggleKeyVisibility', 'click', () => { const i = $('#providerKeyInput'); i.type = i.type === 'password' ? 'text' : 'password'; });
   bind('#btnSaveProviderKey', 'click', async () => {
     if (!curProvider) return;
-    const val = $('#providerKeyInput').value.trim();
-    if (curProvider === 'custom') { state.customEndpoint = $('#customEndpointInput').value.trim() || 'http://localhost:11434/v1'; store.set('sain.customEndpoint', state.customEndpoint); state.customOn = true; store.set('sain.customOn', true); }
-    if (val) state.keys[curProvider] = val; else if (curProvider !== 'custom') return toast('Key is empty');
-    store.set('sain.keys', state.keys); closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Checking key...', 5000);
-    const p = curProvider, k = (state.keys[p] || '').trim();
+    const p = curProvider, raw = $('#providerKeyInput').value.trim(), val = raw ? cleanKey(raw) : '';
+    if (raw && !val) return toast('That does not look like a valid API key');
+    if (p === 'custom') {
+      const ep = safeUrl($('#customEndpointInput').value.trim() || 'http://localhost:11434/v1');
+      if (!ep) return toast('Enter a valid http(s) URL');
+      state.customEndpoint = ep; store.set('sain.customEndpoint', ep); state.customOn = true; store.set('sain.customOn', true);
+    }
+    if (!val && p !== 'custom') { closeModal($('#modalKey')); return toast(state.keys[p] ? 'No changes' : 'Key is empty'); }
+    if (val) {
+      if (!state.user && p !== 'custom') { closeModal($('#modalKey')); toast('Sign in to save your personal keys'); openModal('#modalLogin'); return; }
+      state.keys[p] = val;
+      try { await persistKey(p, val); } catch (e) { toast('Saved for this session only: ' + shortErr(e), 6000); }
+    }
+    closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Checking key...', 5000);
+    const k = (state.keys[p] || '').trim();
     try {
       const ids = await discoverModels(p, k);
       if (ids === null) return toast('Key saved');
       applyDiscovered(p, ids); persistModels(); updateActiveLabel(); renderModels();
-      toast(ids.length ? 'Key verified · ' + ids.length + ' models available' : 'Key verified');
+      toast(ids.length ? 'Key verified \u00b7 ' + ids.length + ' models available' : 'Key verified');
     } catch (err) { toast('Key check failed: ' + shortErr(err), 7000); }
   });
   bind('#btnRemoveProviderKey', 'click', () => {
-    if (!curProvider) return; delete state.keys[curProvider]; store.set('sain.keys', state.keys); if (curProvider === 'custom') { state.customOn = false; store.set('sain.customOn', false); }
+    if (!curProvider) return; const p = curProvider;
+    delete state.keys[p]; if (p === 'custom') { state.customOn = false; store.set('sain.customOn', false); }
     closeModal($('#modalKey')); updateActiveLabel(); renderProviderCards(); renderModels(); toast('Key removed');
+    if (state.user) persistKey(p, null).catch(e => toast('Could not remove the saved copy: ' + shortErr(e), 5000));
   });
 
   /* ---------- Settings ---------- */
@@ -1623,12 +1734,14 @@ Assist the user with:
   bind('#settingTemp', 'input', e => { $('#tempValue').textContent = Number(e.target.value).toFixed(2); });
   bind('#btnSaveSettings', 'click', () => {
     const t = parseFloat($('#settingTemp').value);
+    const px = $('#settingProxy').value.trim();
+    if (px && !safeUrl(px.replace('%s', 'x'))) return toast('Proxy must be a valid http(s) URL');
     state.settings = {
       temperature: isNaN(t) ? 0.4 : t,
       maxTokens: parseInt($('#settingMaxTokens').value, 10) || 8192,
       timeoutSec: parseInt($('#settingTimeout').value, 10) || 90,
-      corsProxy: $('#settingProxy').value.trim(),
-      systemPrompt: $('#settingSysPrompt').value.trim()
+      corsProxy: px,
+      systemPrompt: sanitizeText($('#settingSysPrompt').value, 4000).trim()
     };
     store.set('sain.settings', state.settings); closeModal($('#modalSettings')); toast('Settings saved');
   });
@@ -1683,7 +1796,38 @@ Assist the user with:
   bind('#guideSendBtn', 'click', sendGuide);
   bind(guideInput, 'keydown', e => { if (e.key === 'Enter' && !e.shiftKey && isDesktop()) { e.preventDefault(); sendGuide(); } });
 
-  /* ---------- Firebase (Auth + Realtime Database) ---------- */
+  /* ---------- Firebase (Auth + Firestore) ----------
+     DATA MODEL
+       config/system_keys                  admin fallback keys  { gemini, anthropic, openai, deepseek, openrouter, geminiModel? }
+       users/{uid}/settings/apiKeys        the signed-in user's own keys { gemini, anthropic, ..., updatedAt }
+       Realtime DB users/{uid}/workspace   optional editor-code sync (legacy; keep or drop)
+     Chats and generated-app history stay in localStorage on purpose (no Firestore read/write cost).
+
+     FIRESTORE SECURITY RULES (paste into Firebase console > Firestore > Rules, replace YOUR_ADMIN_UID):
+       rules_version = '2';
+       service cloud.firestore {
+         match /databases/{database}/documents {
+           // Only the owner can edit the fallback keys.
+           match /config/system_keys {
+             allow read: if true;            // required so free-tier visitors can chat. See the note below.
+             allow write: if request.auth != null && request.auth.uid == 'YOUR_ADMIN_UID';
+           }
+           // Each user can read/write ONLY their own keys, and only known string fields.
+           match /users/{userId}/settings/apiKeys {
+             allow read:   if request.auth != null && request.auth.uid == userId;
+             allow create, update: if request.auth != null && request.auth.uid == userId
+               && request.resource.data.keys().hasOnly(['gemini','anthropic','openai','deepseek','openrouter',
+                    'groq','mistral','perplexity','together','custom','updatedAt'])
+               && request.resource.data.keys().size() < 14;
+             allow delete: if request.auth != null && request.auth.uid == userId;
+           }
+           match /{document=**} { allow read, write: if false; }
+         }
+       }
+     NOTE: a key readable by the browser can be copied by a visitor. To truly hide the admin keys, set
+     `allow read: if false` and call the AI providers from a Cloud Function that holds them; at minimum restrict the
+     Gemini key by HTTP referrer and set provider spend limits. Firestore encrypts data at rest and the rules above
+     isolate each user's keys, but the keys are still plain text inside the user's own signed-in session. */
   // Paste your Firebase web config below.
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyA2tXddGxNdcooTlg9JsYNUwzpxxnobE0A",
@@ -1696,46 +1840,96 @@ Assist the user with:
     measurementId: "G-ZLY1S4GQY2"
   };
   const FB_VER = '10.13.0';
-  const fb = { auth: null, db: null, ref: null, cfgRef: null };
+  const fb = { auth: null, db: null, fs: null, ref: null, cfgRef: null, cfgUnsub: null, keysUnsub: null };
   let fbInit = null;
   const loadScript = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
 
-  // Owner (trial / support agent) config is read silently from: sain_workspace/admin_config { geminiKey, model }
+  // Admin fallback keys: Firestore config/system_keys (legacy fallback: RTDB sain_workspace/admin_config.geminiKey)
   function watchOwnerConfig() {
-    if (!fb.db) { resolveOwner(); return; }
-    if (fb.cfgRef) { try { fb.cfgRef.off('value'); } catch (e) {} }
-    fb.cfgRef = fb.db.ref('sain_workspace/admin_config');
-    fb.cfgRef.on('value', snap => {
-      const v = snap.val() || {};
-      state.ownerGeminiKey = String(v.geminiKey || '').trim();
-      if (v.model) state.ownerModel = String(v.model);
-      resolveOwner();
-    }, () => resolveOwner());
+    if (fb.cfgUnsub) { try { fb.cfgUnsub(); } catch (e) {} fb.cfgUnsub = null; }
+    if (fb.cfgRef) { try { fb.cfgRef.off('value'); } catch (e) {} fb.cfgRef = null; }
+    if (!fb.fs && !fb.db) { resolveOwner(); return; }
+    if (fb.fs) {
+      fb.cfgUnsub = fb.fs.collection('config').doc('system_keys').onSnapshot(
+        snap => { ADMIN.fsDoc = snap.exists ? (snap.data() || {}) : {}; rebuildAdmin(); resolveOwner(); },
+        () => { ADMIN.fsDoc = {}; rebuildAdmin(); resolveOwner(); });
+    }
+    if (fb.db) {
+      fb.cfgRef = fb.db.ref('sain_workspace/admin_config');
+      fb.cfgRef.on('value', snap => { const v = snap.val() || {}; ADMIN.legacy = { gemini: v.geminiKey, model: v.model }; rebuildAdmin(); resolveOwner(); }, () => resolveOwner());
+    }
   }
 
   async function initFirebase() {
-    if (!FIREBASE_CONFIG.apiKey) { resolveOwner(); return; }
+    if (!FIREBASE_CONFIG.apiKey) { resolveOwner(); resolveAuth(); return; }
     try {
       if (!window.firebase) {
         await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-app-compat.js');
         await Promise.all([
           loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-auth-compat.js'),
-          loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-database-compat.js')
+          loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-firestore-compat.js')
         ]);
+        await loadScript('https://www.gstatic.com/firebasejs/' + FB_VER + '/firebase-database-compat.js').catch(() => {});   // optional
       }
       const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
       fb.auth = firebase.auth(app);
-      if (FIREBASE_CONFIG.databaseURL) fb.db = firebase.database(app);
+      fb.fs = firebase.firestore(app);
+      if (FIREBASE_CONFIG.databaseURL && firebase.database) { try { fb.db = firebase.database(app); } catch (e) {} }
       watchOwnerConfig();
       fb.auth.onAuthStateChanged(onAuthChange);
-    } catch (e) { resolveOwner(); }
+    } catch (e) { resolveOwner(); resolveAuth(); }
+  }
+
+  // Personal keys: users/{uid}/settings/apiKeys. Live listener = keys come back after logout/login and on other devices.
+  const userKeysRef = uid => fb.fs.collection('users').doc(uid).collection('settings').doc('apiKeys');
+  async function persistKey(p, val) {
+    if (!state.user || !fb.fs) throw new Error('Sign in to sync keys to your account');
+    const FV = firebase.firestore.FieldValue;
+    await userKeysRef(state.user.uid).set({ [p]: val ? val : FV.delete(), updatedAt: FV.serverTimestamp() }, { merge: true });
+  }
+  function watchUserKeys(user) {
+    if (fb.keysUnsub) { try { fb.keysUnsub(); } catch (e) {} fb.keysUnsub = null; }
+    if (!user || !fb.fs) { keysReady = Promise.resolve(); return; }
+    let done; keysReady = new Promise(r => { done = r; });
+    let first = true;
+    fb.keysUnsub = userKeysRef(user.uid).onSnapshot(snap => {
+      const remote = snap.exists ? (snap.data() || {}) : {}, next = {};
+      PROVIDER_ORDER.forEach(p => { const k = typeof remote[p] === 'string' ? cleanKey(remote[p]) : ''; if (k) next[p] = k; });
+      if (first) {
+        first = false;
+        // One-time migration of keys an older version kept in localStorage.
+        const legacy = store.get('sain.keys', null), mig = {};
+        if (legacy && typeof legacy === 'object') PROVIDER_ORDER.forEach(p => { const k = typeof legacy[p] === 'string' ? cleanKey(legacy[p]) : ''; if (k && !next[p]) { next[p] = k; mig[p] = k; } });
+        const wipe = () => { try { localStorage.removeItem('sain.keys'); } catch (e) {} };
+        if (Object.keys(mig).length) userKeysRef(user.uid).set(Object.assign({}, mig, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }), { merge: true }).then(wipe).catch(() => {});
+        else if (legacy) wipe();
+      }
+      const changed = JSON.stringify(next) !== JSON.stringify(state.keys);
+      state.keys = next;
+      done();
+      if (changed) { updateActiveLabel(); renderProviderCards(); renderModels(); syncKeyedProviders(); }
+    }, err => { done(); toast('Could not load your saved keys: ' + shortErr(err), 5000); });
+  }
+
+  function showLoginBadge() {
+    const b = $('#loginBadge'); if (!b) return;
+    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
   }
 
   function onAuthChange(user) {
+    const wasIn = !!state.user;
     state.user = user || null;
     renderAccount(user);
-    if (!user && !$('#app').classList.contains('hidden')) showLanding();
+    if (!user && wasIn) {
+      // Signed out: wipe every personal secret from memory so the next person on this device sees none of them.
+      state.keys = {}; state.githubToken = ''; state.githubLogin = '';
+      sstore.set('sain.githubToken', '');
+      if (!$('#app').classList.contains('hidden')) showLanding();
+    }
+    watchUserKeys(user);
     watchOwnerConfig();
+    resolveAuth();
+    updateActiveLabel(); renderProviderCards();
     if (fb.ref) { try { fb.ref.off(); } catch (e) {} fb.ref = null; }
     if (user && fb.db) {
       fb.ref = fb.db.ref('users/' + user.uid + '/workspace');
@@ -1770,15 +1964,15 @@ Assist the user with:
         catch (e) { if (e.code !== 'auth/credential-already-in-use' && e.code !== 'auth/provider-already-linked') throw e; r = await fb.auth.signInWithPopup(provider); }
       } else r = await fb.auth.signInWithPopup(provider);
       const token = r.credential && r.credential.accessToken;
-      if (github && token) { state.githubToken = token; state.githubLogin = ''; store.set('sain.githubToken', token); }
+      if (github && token) { state.githubToken = token; state.githubLogin = ''; sstore.set('sain.githubToken', token); }
       if (r.user) { state.user = r.user; renderAccount(r.user); }
-      toast('Signed in');
+      showLoginBadge();
       return r;
     } catch (e) { const m = AUTH_ERR[e.code]; if (m !== '') toast(m || 'Sign-in failed'); return null; }
   }
   function signOutUser() {
     if (fb.auth) fb.auth.signOut().catch(() => {});
-    state.githubToken = ''; state.githubLogin = ''; store.set('sain.githubToken', '');
+    state.githubToken = ''; state.githubLogin = ''; sstore.set('sain.githubToken', '');
     toast('Signed out');
   }
   function renderAccount(user) {
@@ -1923,7 +2117,7 @@ Assist the user with:
   /* ---------- Autonomous Multi-Agent Pipeline ----------
      Gemini (plan) -> Claude (design) -> Gemini (JS logic) -> DeepSeek (audit + fix) -> Gemini (final QA + fix) */
   const AutoAgentSystem = (function () {
-    const STEP_COLORS = { 1: 'blue', 2: 'orange', 3: 'blue', 4: 'cyan', 5: 'emerald' };
+    const STEP_COLORS = { 1: 'orange', 2: 'blue', 3: 'cyan' };
     const PATCH_FORMAT = 'Reply with ONLY patch blocks in exactly this format, one per fix:\n<<<<<<< SEARCH\n(exact existing text, short but specific)\n=======\n(fixed text)\n>>>>>>> REPLACE\nSEARCH must match the code character for character. Do NOT rewrite the whole file. If nothing needs fixing, reply exactly: NO_ISSUES';
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -1952,16 +2146,17 @@ Assist the user with:
       if (!apiKey) throw new Error('Missing API key for ' + provider);
       let url, body, headers;
       if (provider === 'gemini') {
-        url = applyProxy('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey));
-        headers = { 'Content-Type': 'application/json' };
+        url = applyProxy('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent');
+        headers = { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey };
         body = JSON.stringify({ systemInstruction: { parts: [{ text: systemPrompt }] }, contents: [{ role: 'user', parts: [{ text: userPrompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 32768 } });
       } else if (provider === 'anthropic') {
         url = applyProxy('https://api.anthropic.com/v1/messages');
         headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
         body = JSON.stringify({ model, system: systemPrompt, messages: [{ role: 'user', content: userPrompt }], max_tokens: 16000, temperature: 0.4 });
-      } else if (provider === 'deepseek') {
-        url = applyProxy('https://api.deepseek.com/chat/completions');
+      } else if (ENDPOINTS[provider]) {
+        url = applyProxy(ENDPOINTS[provider]);
         headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey };
+        if (provider === 'openrouter') { headers['HTTP-Referer'] = location.origin || 'https://sain.local'; headers['X-Title'] = 'SAIM AI AGENT'; }
         body = JSON.stringify({ model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.2, max_tokens: 8192 });
       } else throw new Error('Unknown provider: ' + provider);
 
@@ -2017,15 +2212,6 @@ Assist the user with:
       icons();
     }
 
-    function parsePlan(text) {
-      const t = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const a = t.indexOf('{'), b = t.lastIndexOf('}');
-      const plan = JSON.parse(a >= 0 && b > a ? t.slice(a, b + 1) : t);
-      if (!plan.design_prompt || !plan.logic_prompt) throw new Error('Planner returned an incomplete plan');
-      const str = v => typeof v === 'string' ? v : JSON.stringify(v);
-      return { design_prompt: str(plan.design_prompt), logic_prompt: str(plan.logic_prompt) };
-    }
-
     // Applies a reviewer's answer: patch blocks (preferred), NO_ISSUES, or a complete rewritten file
     function applyReview(code, text) {
       const patches = []; let m; PATCH_RE.lastIndex = 0;
@@ -2039,60 +2225,67 @@ Assist the user with:
       if (full && full[1] && looksComplete(full[1]) && full[1].length > code.length * 0.6) return { code: full[1].trim(), note: 'File corrected' };
       return { code, note: 'No usable changes returned' };
     }
-    async function review(provider, model, key, system, code, request) {
+    // ----- role based routing with fallbacks -----
+    const CLOUD = PROVIDER_ORDER.filter(p => p !== 'custom');
+    const PNAME = { gemini: 'Gemini', anthropic: 'Claude', openai: 'OpenAI', deepseek: 'DeepSeek', openrouter: 'OpenRouter' };
+    const pname = p => PNAME[p] || (providerOf(p) ? providerOf(p).name : p);
+    const DEFAULT_MODEL = { gemini: 'gemini-flash-latest', anthropic: 'claude-sonnet-5-5', openai: 'gpt-4o', deepseek: 'deepseek-chat', openrouter: 'openrouter/auto', groq: 'llama-3.3-70b-versatile', mistral: 'mistral-large-latest', together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', perplexity: 'sonar-pro' };
+    const modelFor = p => ['gemini', 'anthropic', 'deepseek'].includes(p) ? pickModel(p, DEFAULT_MODEL[p]) : DEFAULT_MODEL[p];
+    const ROLE = {
+      design: ['anthropic', 'gemini', 'openai', 'openrouter', 'deepseek'],   // Claude, falls back to Gemini
+      logic: ['gemini', 'openai', 'openrouter', 'anthropic', 'deepseek'],     // Gemini
+      verify: ['deepseek', 'openrouter', 'gemini']                             // DeepSeek -> OpenRouter -> Gemini self-check
+    };
+    async function callRole(cands, anyFallback, system, prompt, onTry) {
+      const order = Array.from(new Set(anyFallback ? cands.concat(CLOUD) : cands)).filter(p => hasKeyFor(p) && state.keys[p]);
+      if (!order.length) throw new Error('No API key available for this step');
+      let lastErr;
+      for (const p of order) {
+        try { if (onTry) onTry(p); const r = await fetchAgent(p, modelFor(p), system, prompt, state.keys[p].trim()); return { provider: p, text: r.text, truncated: r.truncated }; }
+        catch (e) { lastErr = e; if (state.stopFlag) throw e; }
+      }
+      throw lastErr;
+    }
+    async function review(system, code, request, onTry) {
       const errs = syntaxErrors(code);
       const prompt = 'Original user request:\n' + request + '\n\nScript syntax errors detected by the app:\n' + (errs.join('\n') || 'none') + '\n\nCODE:\n```html\n' + code + '\n```';
-      const r = await fetchAgent(provider, model, system, prompt, key);
-      return applyReview(code, r.text);
+      const r = await callRole(ROLE.verify, false, system, prompt, onTry);
+      return Object.assign({ provider: r.provider }, applyReview(code, r.text));
     }
 
     async function executePipeline(userPrompt) {
       if (state.busy) return toast('Please wait for the current task to finish');
-      const kGemini = (state.keys.gemini || '').trim(), kClaude = (state.keys.anthropic || '').trim(), kDeepseek = (state.keys.deepseek || '').trim();
-      const missing = [!kGemini && 'Gemini', !kClaude && 'Anthropic', !kDeepseek && 'DeepSeek'].filter(Boolean);
-      if (missing.length) { toast('Auto System needs these keys too: ' + missing.join(', '), 4500); return; }
+      await waitForAccount();
+      // Project builder = heavy generation: only with the person's own keys.
+      if (!hasPersonalCloudKey()) { limitReply(userPrompt); return; }
 
       state.busy = true;
       const modal = $('#modalAutoAgent'); openModal(modal);
-      for (let i = 1; i <= 5; i++) setStepStatus(i, 'pending', 'Waiting...');
-      const mGemini = pickModel('gemini', 'gemini-flash-latest'), mClaude = pickModel('anthropic', 'claude-sonnet-5-5'), mDeep = pickModel('deepseek', 'deepseek-chat');
+      for (let i = 1; i <= 3; i++) setStepStatus(i, 'pending', 'Waiting...');
       const notes = [];
       let current = 1;
       try {
-        // 1. Gemini plans: one prompt for the designer, one for the JS developer
-        current = 1; setStepStatus(1, 'loading', 'Generating prompt strategy...');
-        const plannerPrompt = 'Analyze this user request: ' + JSON.stringify(userPrompt) + '.\nReturn ONLY a raw JSON object with two keys:\n1. "design_prompt": detailed instructions for a UI designer to build the complete HTML/Tailwind layout (screens, sections, element ids, colours, responsiveness).\n2. "logic_prompt": detailed instructions for a JavaScript developer: every feature, which element ids to wire, state, events, data.';
-        const plan = parsePlan((await fetchAgent('gemini', mGemini, 'You are a technical project manager. Output ONLY valid JSON.', plannerPrompt, kGemini)).text);
-        setStepStatus(1, 'done', 'Strategy created'); notes.push('Gemini planned the design and logic');
+        // 1. UI/UX + structure: Claude (fallback Gemini / any available key)
+        current = 1; setStepStatus(1, 'loading', 'Designing the UI...');
+        const d = await callRole(ROLE.design, true, 'You are an elite UI/UX designer. Use HTML5 and Tailwind CSS via CDN. Build the complete, responsive page layout and components for the request. Give every interactive element a clear id. Do not write the JS logic, only the beautiful UI shell (you may add a minimal empty <script> at the end). Output ONLY one complete HTML file inside a ```html block.', userPrompt, p => setStepStatus(1, 'loading', pname(p) + ' is building the UI layout...'));
+        const uiHTML = codeOf(d.text);
+        if (d.truncated || !looksComplete(uiHTML)) throw new Error(pname(d.provider) + ' output was cut off');
+        setStepStatus(1, 'done', 'UI by ' + pname(d.provider)); notes.push(pname(d.provider) + ' designed the UI');
 
-        // 2. Claude designs the UI
-        current = 2; setStepStatus(2, 'loading', 'Claude is building the UI layout...');
-        const d = await fetchAgent('anthropic', mClaude, 'You are an elite UI/UX designer. Use HTML5 and Tailwind CSS via CDN. Output ONLY one complete HTML file inside a ```html block. Give every interactive element a clear id. Do not write the JS logic, only the beautiful UI shell (you may add a minimal empty <script> at the end).', plan.design_prompt, kClaude);
-        const claudeHTML = codeOf(d.text);
-        if (d.truncated || !looksComplete(claudeHTML)) throw new Error('Claude output was cut off');
-        setStepStatus(2, 'done', 'UI Design completed'); notes.push('Claude designed the UI');
-
-        // 3. Gemini writes the JavaScript logic
-        current = 3; setStepStatus(3, 'loading', 'Gemini is wiring JavaScript logic...');
-        const devPrompt = 'Original user request:\n' + userPrompt + '\n\nHere is the UI:\n```html\n' + claudeHTML + '\n```\n\nAdd this functionality: ' + plan.logic_prompt;
-        const g = await fetchAgent('gemini', mGemini, 'You are a Senior Full-Stack Developer. You receive an HTML UI. Keep the design, add complete working inline JavaScript so every button and feature works. Output the complete combined HTML file inside one ```html block.', devPrompt, kGemini);
+        // 2. Interactive logic: Gemini
+        current = 2; setStepStatus(2, 'loading', 'Writing JavaScript logic...');
+        const devPrompt = 'Original user request:\n' + userPrompt + '\n\nHere is the UI:\n```html\n' + uiHTML + '\n```\n\nKeep the design and add complete, working inline JavaScript so every button, form and feature in the request works.';
+        const g = await callRole(ROLE.logic, true, 'You are a Senior Full-Stack Developer. You receive an HTML UI. Keep the design, add complete working inline JavaScript so every button and feature works. Output the complete combined HTML file inside one ```html block.', devPrompt, p => setStepStatus(2, 'loading', pname(p) + ' is wiring JavaScript logic...'));
         let code = codeOf(g.text);
-        if (g.truncated || !looksComplete(code)) throw new Error('Gemini output was cut off');
-        setStepStatus(3, 'done', 'Logic implemented'); notes.push('Gemini wrote the JavaScript logic');
+        if (g.truncated || !looksComplete(code)) throw new Error(pname(g.provider) + ' output was cut off');
+        setStepStatus(2, 'done', 'Logic by ' + pname(g.provider)); notes.push(pname(g.provider) + ' wrote the JavaScript logic');
 
-        // 4. DeepSeek audits and fixes (patches only). A failure here skips the step instead of stopping the pipeline.
-        current = 4; setStepStatus(4, 'loading', 'DeepSeek is checking for bugs...');
+        // 3. Verification: DeepSeek -> OpenRouter -> Gemini self-check. A failure here skips the step instead of stopping the build.
+        current = 3; setStepStatus(3, 'loading', 'Checking for bugs...');
         try {
-          const r4 = await review('deepseek', mDeep, kDeepseek, 'You are an elite Code Auditor. Review the HTML/CSS/JS for syntax errors, undefined variables or ids, broken event handlers, missing features from the request and layout bugs. ' + PATCH_FORMAT, code, userPrompt);
-          code = r4.code; setStepStatus(4, 'done', r4.note); notes.push('DeepSeek audit: ' + r4.note);
-        } catch (e) { setStepStatus(4, 'error', 'Skipped: ' + shortErr(e)); notes.push('DeepSeek audit skipped'); }
-
-        // 5. Gemini final QA (patches only)
-        current = 5; setStepStatus(5, 'loading', 'Gemini is running Final QA...');
-        try {
-          const r5 = await review('gemini', mGemini, kGemini, 'You are the Final Quality Assurance AI. Check the whole code one last time against the original request: it must run without errors, every feature and button must work, the layout must work on mobile. ' + PATCH_FORMAT, code, userPrompt);
-          code = r5.code; setStepStatus(5, 'done', r5.note); notes.push('Gemini final QA: ' + r5.note);
-        } catch (e) { setStepStatus(5, 'error', 'Skipped: ' + shortErr(e)); notes.push('Gemini final QA skipped'); }
+          const r3 = await review('You are an elite Code Auditor. Review the HTML/CSS/JS for syntax errors, undefined variables or ids, broken event handlers, missing features from the request and layout bugs. ' + PATCH_FORMAT, code, userPrompt, p => setStepStatus(3, 'loading', pname(p) + ' is checking for bugs...'));
+          code = r3.code; setStepStatus(3, 'done', pname(r3.provider) + ': ' + r3.note); notes.push(pname(r3.provider) + ' verification: ' + r3.note);
+        } catch (e) { setStepStatus(3, 'error', 'Skipped: ' + shortErr(e)); notes.push('Verification skipped'); }
 
         const left = syntaxErrors(code);
         if (left.length) notes.push('Script errors still detected (' + left.length + '): press Auto Fix');
@@ -2101,19 +2294,20 @@ Assist the user with:
         setTimeout(() => {
           closeModal(modal);
           if (!state.currentChatId) newChatSession();
-          const finishMsg = '✨ **Auto Pipeline Completed!**\n\n' + notes.map(n => '• ' + n).join('\n') + '\n\n```html\n' + finalCode + '\n```';
+          const finishMsg = '\u2728 **Auto Pipeline Completed!**\n\n' + notes.map(n => '\u2022 ' + n).join('\n') + '\n\n```html\n' + finalCode + '\n```';
           state.messages.push({ role: 'user', content: userPrompt }); addMessage('user', userPrompt);
           state.messages.push({ role: 'assistant', content: finishMsg, meta: 'Auto Agent Multi-Model System' });
           addMessage('assistant', finishMsg, 'Auto Agent Multi-Model System');
           saveCurrentChat();
           setCode(finalCode, true);
+          saveAppSnapshot(userPrompt, finalCode);
           if (!isDesktop()) setPane('preview');
           toast('Live preview updated by Auto System');
         }, 1200);
       } catch (err) {
-        console.error(err);
+        console.error(redact(err && err.message));
         setStepStatus(current, 'error', shortErr(err));
-        toast('Pipeline Failed: ' + shortErr(err), 5000);
+        toast('Pipeline failed: ' + shortErr(err), 5000);
       } finally { state.busy = false; }
     }
     return { execute: executePipeline };
@@ -2124,13 +2318,13 @@ Assist the user with:
     const a = el.dataset.action;
     if (a === 'launch') showApp();
     else if (a === 'home') showLanding();
-    else if (a === 'keys') openProviders();
+    else if (a === 'keys') { closeModal($('#modalSettings')); openProviders(); }
     else if (a === 'settings') { openSettings(); closeDrawer(); }
     else if (a === 'guide') openGuide();
   });
   bind('#keyGuardChip', 'click', openProviders);
   bind('#btnAutoAgent', 'click', () => {
-    const text = promptInput.value.trim();
+    const text = sanitizeText(promptInput.value, 20000).trim();
     if (!text) return toast('Please enter a prompt first.');
     promptInput.value = ''; autoGrow();
     AutoAgentSystem.execute(text);
