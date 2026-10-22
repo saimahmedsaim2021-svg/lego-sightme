@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>SAIM AI AGENT — Admin Dashboard (Dual Sync)</title>
+<title>SAIM AI AGENT — Admin Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { theme: { extend: {
@@ -29,15 +29,14 @@
     <div class="flex items-center gap-3 mb-6">
       <div class="w-10 h-10 rounded-2xl glass grid place-items-center text-purple-400 font-bold">SA</div>
       <div>
-        <h1 class="font-extrabold text-lg text-white">SAIM Studio <span class="grad-text">Admin Panel (Dual Sync)</span></h1>
-        <p class="text-xs text-zinc-400">Saves keys to Realtime DB & Firestore simultaneously</p>
+        <h1 class="font-extrabold text-lg text-white">SAIM Studio <span class="grad-text">Admin Panel</span></h1>
+        <p class="text-xs text-zinc-400">Direct Dual-Sync to Realtime DB & Firestore</p>
       </div>
     </div>
 
-    <!-- Auth Section -->
-    <div id="authSection" class="mb-6 p-4 rounded-2xl bg-ink-900 border border-white/5 flex items-center justify-between text-xs">
-      <span id="adminStatus" class="text-amber-400">Checking authentication...</span>
-      <button id="btnLogin" type="button" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition cursor-pointer hidden">Login with Google</button>
+    <!-- Status Message Box -->
+    <div id="adminToast" class="mb-4 p-3 rounded-xl bg-ink-900 border border-white/5 text-center text-xs font-medium text-cyan-400">
+      Ready to save keys.
     </div>
 
     <!-- Admin Form -->
@@ -67,15 +66,12 @@
         <input type="text" id="adminModel" class="inp font-mono" value="gemini-flash-latest" />
       </div>
 
-      <button type="submit" id="saveBtn" class="pbtn mt-2">Save Keys to Realtime DB & Firestore</button>
+      <button type="submit" id="saveBtn" class="pbtn mt-2">Save Keys Now</button>
     </form>
-
-    <div id="adminToast" class="mt-4 p-3 rounded-xl bg-ink-900 text-center text-xs font-medium hidden"></div>
   </div>
 
-  <!-- Firebase Scripts (Compat v10: App, Auth, Database, Firestore) -->
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
@@ -93,91 +89,51 @@
     if (!firebase.apps.length) {
       firebase.initializeApp(FIREBASE_CONFIG);
     }
-    const auth = firebase.auth();
     const rtdb = firebase.database();
     const fsdb = firebase.firestore();
 
-    const statusEl = document.getElementById('adminStatus');
-    const loginBtn = document.getElementById('btnLogin');
     const toastEl = document.getElementById('adminToast');
-
     function showToast(msg, isErr) {
       toastEl.textContent = msg;
-      toastEl.className = `mt-4 p-3 rounded-xl bg-ink-900 text-center text-xs font-medium ${isErr ? 'text-red-400 border border-red-500/30' : 'text-emerald-400 border border-emerald-500/30'}`;
-      toastEl.classList.remove('hidden');
+      toastEl.className = `mb-4 p-3 rounded-xl bg-ink-900 text-center text-xs font-medium border ${isErr ? 'text-red-400 border-red-500/30' : 'text-emerald-400 border-emerald-500/30'}`;
     }
 
-    // Auth State
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        statusEl.textContent = `Logged in: ${user.email || user.displayName}`;
-        statusEl.className = 'text-emerald-400';
-        loginBtn.classList.add('hidden');
-        loadKeys();
-      } else {
-        statusEl.textContent = 'Please log in to manage keys.';
-        statusEl.className = 'text-amber-400';
-        loginBtn.classList.remove('hidden');
-      }
-    });
-
-    loginBtn.onclick = () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(e => showToast('Login Error: ' + e.message, true));
-    };
-
-    function loadKeys() {
-      showToast('Loading keys from Firebase...', false);
-      // প্রথমে Realtime DB থেকে লোড করার চেষ্টা করবে, না পেলে Firestore থেকে
+    // পেজ লোড হওয়ার সাথে সাথে আগের সেভ করা কি-গুলো অটো নিয়ে আসবে
+    window.addEventListener('DOMContentLoaded', () => {
       rtdb.ref('config/system_keys').once('value').then(snap => {
-        let data = snap.val();
-        if (!data) {
-          return fsdb.collection('config').doc('system_keys').get().then(doc => doc.exists ? doc.data() : {});
-        }
-        return data;
-      }).then(data => {
+        const data = snap.val() || {};
         document.getElementById('adminGemini').value = data.gemini || '';
         document.getElementById('adminOpenai').value = data.openai || '';
         document.getElementById('adminDeepseek').value = data.deepseek || '';
         document.getElementById('adminAnthropic').value = data.anthropic || '';
         if (data.geminiModel) document.getElementById('adminModel').value = data.geminiModel;
-        showToast('Keys loaded successfully!', false);
-        setTimeout(() => toastEl.classList.add('hidden'), 2500);
-      }).catch(err => {
-        showToast('Load Failed: ' + err.message, true);
-      });
-    }
+      }).catch(err => console.log(err));
+    });
 
+    // সেভ করার বাটন হ্যান্ডলার
     document.getElementById('adminForm').onsubmit = async (e) => {
       e.preventDefault();
-      
-      if (!auth.currentUser) {
-        showToast('Error: You must be logged in to save keys!', true);
-        return;
-      }
-
-      showToast('Saving to Realtime DB & Firestore...', false);
+      showToast('Saving data to Firebase...', false);
 
       const payload = {
         gemini: document.getElementById('adminGemini').value.trim(),
         openai: document.getElementById('adminOpenai').value.trim(),
         deepseek: document.getElementById('adminDeepseek').value.trim(),
         anthropic: document.getElementById('adminAnthropic').value.trim(),
-        geminiModel: document.getElementById('adminModel').value.trim() || 'gemini-flash-latest',
-        updatedAt: firebase.firestore.FieldValue ? firebase.firestore.FieldValue.serverTimestamp() : Date.now()
+        geminiModel: document.getElementById('adminModel').value.trim() || 'gemini-flash-latest'
       };
 
       try {
-        // ১. রিয়েলটাইম ডেটাবেসে সেভ করা
+        // ১. রিয়েলটাইম ডেটাবেসে সেভ
         await rtdb.ref('config/system_keys').set(payload);
 
-        // ২. ফায়ারস্টোরে সেভ করা
+        // ২. ফায়ারস্টোরে সেভ
         await fsdb.collection('config').doc('system_keys').set(payload, { merge: true });
 
-        showToast('✅ Successfully saved to BOTH Realtime DB & Firestore!', false);
+        showToast('✅ Successfully saved to BOTH Databases!', false);
       } catch (err) {
         console.error(err);
-        showToast('❌ Save Failed: ' + err.message, true);
+        showToast('❌ Error: ' + err.message, true);
       }
     };
   </script>
