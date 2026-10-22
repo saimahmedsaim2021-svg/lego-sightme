@@ -1915,19 +1915,25 @@ Assist the user with:
   const loadScript = src => new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
 
   // Admin fallback keys: Firestore config/system_keys (legacy fallback: RTDB sain_workspace/admin_config.geminiKey)
+  // ---------- Admin / default system keys (Fixed for Realtime DB) ----------
   function watchOwnerConfig() {
-    if (fb.cfgUnsub) { try { fb.cfgUnsub(); } catch (e) {} fb.cfgUnsub = null; }
     if (fb.cfgRef) { try { fb.cfgRef.off('value'); } catch (e) {} fb.cfgRef = null; }
-    if (!fb.fs && !fb.db) { resolveOwner(); return; }
-    if (fb.fs) {
-      fb.cfgUnsub = fb.fs.collection('config').doc('system_keys').onSnapshot(
-        snap => { ADMIN.fsDoc = snap.exists ? (snap.data() || {}) : {}; rebuildAdmin(); resolveOwner(); },
-        () => { ADMIN.fsDoc = {}; rebuildAdmin(); resolveOwner(); });
-    }
-    if (fb.db) {
-      fb.cfgRef = fb.db.ref('sain_workspace/admin_config');
-      fb.cfgRef.on('value', snap => { const v = snap.val() || {}; ADMIN.legacy = { gemini: v.geminiKey, model: v.model }; rebuildAdmin(); resolveOwner(); }, () => resolveOwner());
-    }
+    if (!fb.db) { resolveOwner(); return; }
+    
+    // সরাসরি রিয়েলটাইম ডেটাবেসের config/system_keys থেকে কি রিড করবে
+    fb.cfgRef = fb.db.ref('config/system_keys');
+    fb.cfgRef.on('value', snap => {
+      const v = snap.val() || {};
+      ADMIN.keys = {
+        gemini: cleanKey(v.gemini || ''),
+        openai: cleanKey(v.openai || ''),
+        deepseek: cleanKey(v.deepseek || ''),
+        anthropic: cleanKey(v.anthropic || '')
+      };
+      if (v.geminiModel) ADMIN.geminiModel = v.geminiModel;
+      rebuildAdmin();
+      resolveOwner();
+    }, () => resolveOwner());
   }
 
   async function initFirebase() {
