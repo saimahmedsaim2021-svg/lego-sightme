@@ -366,7 +366,7 @@
   <div class="mbox fade-in">
     <div class="mhead"><h3 class="font-semibold text-base">Workspace Settings</h3><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div>
     <div class="mbody">
-      <button type="button" data-action="keys" class="w-full flex items-center gap-3 p-3 rounded-2xl text-left bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15"><i data-lucide="key-round" class="w-4 h-4 text-emerald-300 shrink-0"></i><span class="min-w-0"><span class="block text-xs font-semibold text-emerald-200">Personal API Keys</span><span class="block text-[10.5px] text-zinc-400">Gemini, Claude, OpenAI, DeepSeek, OpenRouter… synced to your account and restored on every device. Unlocks unlimited project generation.</span></span></button>
+      <button type="button" data-action="keys" class="w-full flex items-center gap-3 p-3 rounded-2xl text-left bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15"><i data-lucide="key-round" class="w-4 h-4 text-emerald-300 shrink-0"></i><span class="min-w-0"><span class="block text-xs font-semibold text-emerald-200">Personal API Keys</span><span class="block text-[10.5px] text-zinc-400">Gemini, Claude, OpenAI, DeepSeek, OpenRouter, Groq… synced to your account and restored on every device. Unlocks unlimited project generation.</span></span></button>
       <div><div class="flex justify-between text-xs mb-1"><label class="font-medium text-zinc-300">Temperature</label><span id="tempValue" class="font-mono text-cyan-400">0.40</span></div><input id="settingTemp" type="range" min="0" max="1" step="0.05" class="w-full accent-cyan-400" /></div>
       <div class="grid grid-cols-2 gap-3">
         <div><label class="lbl">Max Output Tokens</label><input id="settingMaxTokens" type="number" step="256" class="inp font-mono" /></div>
@@ -475,20 +475,6 @@
   const safeUrl = u => { try { const x = new URL(String(u)); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href.replace(/\/+$/, '') : ''; } catch (e) { return ''; } };
   const redact = s => String(s == null ? '' : s).replace(/AIza[\w-]{20,}/g, 'AIza\u2026').replace(/sk-[\w-]{12,}/g, 'sk-\u2026').replace(/gsk_[\w-]{12,}/g, 'gsk_\u2026').replace(/pplx-[\w-]{12,}/g, 'pplx-\u2026').replace(/sk-or-v1-[\w-]{12,}/g, 'sk-or-v1-\u2026');
 
-  // =====================================================
-  // Obfuscated OpenRouter key (base64 of reversed string)
-  // This deters casual inspection only; NOT real security.
-  // The key is placed here so users can chat for free without adding their own.
-  // =====================================================
-  const _enc = 'M2U4MDlhNDY3MWJlNmQxYTRkMGQ2ZDliOWU4MGVhNDU5YWJlY2E4MTMxNjk0NTA1YTI1NTBlNmM2ZWJkNWQ4YWZlLTF2LXJvLWtz';
-  function _decodeKey() {
-    try {
-      const rev = atob(_enc);
-      return rev.split('').reverse().join('');
-    } catch (e) { return ''; }
-  }
-  const OPENROUTER_FALLBACK_KEY = _decodeKey();
-
   let toastTimer;
   function toast(msg, ms) {
     const t = $('#toast'); if (!t) return;
@@ -520,11 +506,11 @@
   }
 
   const PROVIDERS = [
+    { id: 'groq', name: 'Groq Cloud', icon: 'zap', color: 'text-amber-300', bg: 'bg-amber-500/10', hint: 'gsk_...', docs: 'https://console.groq.com/keys', desc: 'Ultra-fast Llama 3.3 (free tier)' },
     { id: 'gemini', name: 'Google Gemini', icon: 'gem', color: 'text-sky-300', bg: 'bg-sky-500/10', hint: 'AIzaSy...', docs: 'https://aistudio.google.com/app/apikey', desc: 'Gemini Flash & Pro' },
     { id: 'anthropic', name: 'Anthropic Claude', icon: 'brain', color: 'text-orange-300', bg: 'bg-orange-500/10', hint: 'sk-ant-...', docs: 'https://console.anthropic.com/settings/keys', desc: 'Claude Sonnet, Haiku & Opus' },
     { id: 'openai', name: 'OpenAI (ChatGPT)', icon: 'sparkles', color: 'text-emerald-300', bg: 'bg-emerald-500/10', hint: 'sk-...', docs: 'https://platform.openai.com/api-keys', desc: 'GPT-4o & mini models' },
     { id: 'deepseek', name: 'DeepSeek', icon: 'waves', color: 'text-blue-300', bg: 'bg-blue-500/10', hint: 'sk-...', docs: 'https://platform.deepseek.com/api_keys', desc: 'DeepSeek V3 & R1' },
-    { id: 'groq', name: 'Groq Cloud', icon: 'zap', color: 'text-amber-300', bg: 'bg-amber-500/10', hint: 'gsk_...', docs: 'https://console.groq.com/keys', desc: 'Ultra-fast Llama 3.3' },
     { id: 'openrouter', name: 'OpenRouter', icon: 'network', color: 'text-purple-300', bg: 'bg-purple-500/10', hint: 'sk-or-v1-...', docs: 'https://openrouter.ai/keys', desc: 'One key, hundreds of models' },
     { id: 'mistral', name: 'Mistral AI', icon: 'flame', color: 'text-yellow-300', bg: 'bg-yellow-500/10', hint: 'API key', docs: 'https://console.mistral.ai/api-keys', desc: 'Mistral Large & Codestral' },
     { id: 'perplexity', name: 'Perplexity AI', icon: 'search', color: 'text-teal-300', bg: 'bg-teal-500/10', hint: 'pplx-...', docs: 'https://www.perplexity.ai/settings/api', desc: 'Sonar web-grounded models' },
@@ -574,7 +560,8 @@ RULES FOR FREE / TRIAL MODE (very important):
      "To unlock unlimited project generation, please add your personal API Key in Settings → Keys. Once you add your own key, this limit is removed automatically."
 4. If the user asks HOW to add an API key or how this platform works, teach them clearly and politely:
    - Go to the top-right account menu or the "Keys" button in the sidebar.
-   - Choose a provider (OpenRouter is easiest — free tier available; also Gemini, Groq, OpenAI, Anthropic, DeepSeek).
+   - Choose a provider (Groq is easiest and free — no credit card needed; also OpenRouter, Gemini, OpenAI, Anthropic, DeepSeek).
+   - For Groq: visit https://console.groq.com/keys, sign in with Google or GitHub (no credit card needed), click "Create API Key", copy it (starts with gsk_...), paste it into the input, and press "Save to Vault".
    - For OpenRouter: visit https://openrouter.ai/keys, sign in, click "Create Key", copy it (starts with sk-or-v1-...), paste it into the input, and press "Save to Vault".
    - For Google Gemini: visit https://aistudio.google.com/app/apikey, sign in with Google, click "Create API Key", copy it, paste it into the input, and press "Save to Vault".
    - Once a personal key is saved, the free-tier limit disappears and you can build any size project.
@@ -584,7 +571,7 @@ RULES FOR FREE / TRIAL MODE (very important):
   const GUIDE_PROMPT = `You are "SAIM AI AGENT" — the 24/7 dedicated studio guide and customer care executive.
 Introduce yourself warmly as SAIM AI AGENT.
 Assist the user with:
-- How to get API keys (Google Gemini, Groq, Anthropic, OpenAI, OpenRouter, etc.) — give exact URLs and step-by-step instructions.
+- How to get API keys (Groq is easiest & free, Google Gemini, OpenRouter, Anthropic, OpenAI, etc.) — give exact URLs and step-by-step instructions.
 - Explaining how multi-model auto-handoff works (when one model runs out of quota, the next continues).
 - How to write prompts for web apps and use the code editor/patcher.
 - How the free tier works: chat + short snippets, but full project generation requires a personal API key.
@@ -593,7 +580,7 @@ Assist the user with:
   const state = {
     models: [],
     priority: store.get('sain.priority', []),
-    active: store.get('sain.active', 'openrouter/openai/gpt-4o-mini'),
+    active: store.get('sain.active', 'groq/llama-3.3-70b-versatile'),
     keys: {},
     githubLogin: '', user: null, customOn: !!store.get('sain.customOn', false),
     customEndpoint: store.get('sain.customEndpoint', 'http://localhost:11434/v1'),
@@ -627,10 +614,14 @@ Assist the user with:
     });
   }
 
-  const ADMIN = { keys: {}, geminiModel: 'gemini-flash-latest', fsDoc: {} };
-  const TRIAL_ORDER = ['openrouter', 'gemini', 'deepseek', 'openai', 'anthropic'];
-  const TRIAL_NAMES = { gemini: 'Gemini Flash', deepseek: 'DeepSeek Chat', openai: 'GPT-4o mini', openrouter: 'OpenRouter (Free)', anthropic: 'Claude Haiku' };
-  const TRIAL_MODELS = { openrouter: 'openai/gpt-4o-mini', deepseek: 'deepseek-chat', openai: 'gpt-4o-mini', anthropic: 'claude-haiku-5-5' };
+  // =====================================================
+  // ADMIN: only Firestore (config/system_keys) supplies keys.
+  // No hardcoded keys live in this file.
+  // =====================================================
+  const ADMIN = { keys: {}, geminiModel: 'gemini-flash-latest', groqModel: 'llama-3.3-70b-versatile', fsDoc: {} };
+  const TRIAL_ORDER = ['groq', 'gemini', 'deepseek', 'openai', 'anthropic'];
+  const TRIAL_NAMES = { groq: 'Groq Llama', gemini: 'Gemini Flash', deepseek: 'DeepSeek Chat', openai: 'GPT-4o mini', anthropic: 'Claude Haiku' };
+  const TRIAL_MODELS = { groq: 'llama-3.3-70b-versatile', deepseek: 'deepseek-chat', openai: 'gpt-4o-mini', anthropic: 'claude-haiku-5-5' };
   const TRIAL_MAX_TOKENS = 900, TRIAL_MAX_HISTORY = 6, TRIAL_MAX_CODE_LINES = 14;
   const TRIAL_LIMIT_MSG = 'To unlock unlimited project generation, please add your personal API Key in Settings → Keys. Once you add your own key, this limit is removed automatically.';
   const HEAVY_RE = [
@@ -646,15 +637,15 @@ Assist the user with:
   }
   function rebuildAdmin() {
     const src = ADMIN.fsDoc || {}, next = {};
-    ['gemini', 'anthropic', 'openai', 'deepseek', 'openrouter'].forEach(p => {
+    ['groq', 'gemini', 'anthropic', 'openai', 'deepseek', 'openrouter'].forEach(p => {
       const k = cleanKey(src[p] || (p === 'anthropic' ? src.claude : '') || (p === 'gemini' ? src.geminiKey : ''));
       if (k) next[p] = k;
     });
-    // Hardcoded OpenRouter fallback — ensure free tier always has at least one working key
-    if (!next.openrouter && OPENROUTER_FALLBACK_KEY) next.openrouter = OPENROUTER_FALLBACK_KEY;
     ADMIN.keys = next;
     const m = String(src.geminiModel || src.model || '').trim();
     if (/^[\w.\-]{3,60}$/.test(m)) ADMIN.geminiModel = m;
+    const gm = String(src.groqModel || '').trim();
+    if (/^[\w.\-\/]{3,80}$/.test(gm)) ADMIN.groqModel = gm;
   }
   const hasPersonalCloudKey = () => PROVIDER_ORDER.some(p => p !== 'custom' && hasKeyFor(p));
   const modelById = id => state.models.find(m => m.id === id);
@@ -694,7 +685,7 @@ Assist the user with:
   }
 
   (function () {
-    const phrases = ['Multi-Model Auto-Handoff: Zero Broken Code.', 'Universal BYOK: Gemini, Claude, OpenAI, Groq & Local.', 'Speak to the AI in Bengali and English.', 'Surgical Patch Engine: Edit single lines in seconds.', 'Sign in with GitHub and push straight to a repository.'];
+    const phrases = ['Multi-Model Auto-Handoff: Zero Broken Code.', 'Universal BYOK: Groq, Gemini, Claude, OpenAI & Local.', 'Speak to the AI in Bengali and English.', 'Surgical Patch Engine: Edit single lines in seconds.', 'Sign in with GitHub and push straight to a repository.'];
     const el = $('#dynamicSubtitle'); let p = 0, c = 0, del = false;
     $('#year').textContent = new Date().getFullYear();
     (function tick() {
@@ -776,6 +767,7 @@ Assist the user with:
 
     ['groq', 'meta-llama/llama-3.3-70b-instruct', 'Meta: Llama 3.3 70B Instruct'],
     ['groq', 'meta-llama/llama-3.1-8b-instruct', 'Meta: Llama 3.1 8B Instruct'],
+    ['groq', 'llama-3.3-70b-versatile', 'Groq: Llama 3.3 70B Versatile (free)'],
     ['together', 'meta-llama/llama-3.3-70b-instruct-turbo', 'Meta: Llama 3.3 70B Turbo'],
 
     ['openrouter', 'nvidia/nemotron-3-ultra-550b-a55b:free', 'NVIDIA: Nemotron 3 Ultra (Free)'],
@@ -800,7 +792,7 @@ Assist the user with:
     ['perplexity', 'sonar-reasoning-pro', 'Perplexity: Sonar Reasoning Pro'],
     ['perplexity', 'sonar', 'Perplexity: Sonar Standard'],
 
-    ['openrouter', 'openai/gpt-4o-mini', 'OpenRouter: GPT-4o Mini (default)'],
+    ['openrouter', 'openai/gpt-4o-mini', 'OpenRouter: GPT-4o Mini'],
     ['openrouter', 'openrouter/free', 'OpenRouter: Auto-Router (Free Pool)'],
     ['openrouter', 'openrouter/auto', 'OpenRouter: Best Community Auto-Route'],
     ['custom', 'llama3', 'Local: Ollama / Llama 3']
@@ -855,7 +847,7 @@ Assist the user with:
     } else if (p === 'anthropic') {
       out = out.filter(i => !/^claude-(2|instant|3-)/.test(i));
     } else if (p === 'groq') {
-      out = out.filter(i => !/^(llama3-|mixtral|gemma|llama-guard|distil)/.test(i));
+      out = out.filter(i => !/^(mixtral|gemma|llama-guard|distil)/.test(i));
     }
     return out.length ? out : ids;
   }
@@ -982,8 +974,9 @@ Assist the user with:
   }
 
   const ENDPOINTS = {
+    groq: 'https://api.groq.com/openai/v1/chat/completions',
     openrouter: 'https://openrouter.ai/api/v1/chat/completions', openai: 'https://api.openai.com/v1/chat/completions',
-    deepseek: 'https://api.deepseek.com/chat/completions', groq: 'https://api.groq.com/openai/v1/chat/completions',
+    deepseek: 'https://api.deepseek.com/chat/completions',
     mistral: 'https://api.mistral.ai/v1/chat/completions', together: 'https://api.together.xyz/v1/chat/completions',
     perplexity: 'https://api.perplexity.ai/chat/completions'
   };
@@ -1179,7 +1172,7 @@ Assist the user with:
     });
     return out;
   }
-  const isAccountLevel = (err, p) => ['openai', 'anthropic', 'deepseek', 'mistral', 'together', 'perplexity'].includes(p) && (Number(err.status) === 402 || /insufficient[_ ]quota|credit balance|insufficient balance|payment required|exceeded your current quota/i.test(String(err.message || '')));
+  const isAccountLevel = (err, p) => ['openai', 'anthropic', 'deepseek', 'mistral', 'together', 'perplexity', 'groq'].includes(p) && (Number(err.status) === 402 || /insufficient[_ ]quota|credit balance|insufficient balance|payment required|exceeded your current quota/i.test(String(err.message || '')));
   const isBadKey = err => Number(err.status) === 401 || /api key not valid|invalid api key|incorrect api key|invalid x-api-key/i.test(String(err.message || ''));
 
   async function runUnifiedStream(rawMessages, opts) {
@@ -1221,6 +1214,10 @@ Assist the user with:
               catch (e) { if (Number(e.status) !== 404) throw e; last404 = e; }
             }
             if (text === undefined) throw last404;
+          } else if (p === 'groq') {
+            const model = ADMIN.groqModel || TRIAL_MODELS.groq;
+            const entry = { provider: 'groq', id: 'groq/' + model, name };
+            text = await withRetry(() => streamOpenAICompat(entry, tm, system, ctrl.signal, onTrial, ov), ctrl.signal, name);
           } else {
             const entry = { provider: p, id: p + '/' + TRIAL_MODELS[p], name };
             text = await withRetry(() => p === 'anthropic' ? streamAnthropic(entry, tm, system, ctrl.signal, onTrial, ov) : streamOpenAICompat(entry, tm, system, ctrl.signal, onTrial, ov), ctrl.signal, name);
@@ -1903,12 +1900,14 @@ Assist the user with:
     const apply = (v) => {
       v = v || {};
       ADMIN.fsDoc = {
+        groq:       cleanKey(v.groq || ''),
         gemini:     cleanKey(v.gemini || v.geminiKey || ''),
         anthropic:  cleanKey(v.anthropic || v.claude || ''),
         openai:     cleanKey(v.openai || ''),
         deepseek:   cleanKey(v.deepseek || ''),
         openrouter: cleanKey(v.openrouter || ''),
         geminiModel: typeof v.geminiModel === 'string' ? v.geminiModel : '',
+        groqModel:   typeof v.groqModel === 'string' ? v.groqModel : '',
         model:       typeof v.model === 'string' ? v.model : ''
       };
       rebuildAdmin();
@@ -2291,9 +2290,9 @@ Assist the user with:
       return { code, note: 'No usable changes returned' };
     }
     const CLOUD = PROVIDER_ORDER.filter(p => p !== 'custom');
-    const PNAME = { gemini: 'Gemini', anthropic: 'Claude', openai: 'OpenAI', deepseek: 'DeepSeek', openrouter: 'OpenRouter' };
+    const PNAME = { groq: 'Groq', gemini: 'Gemini', anthropic: 'Claude', openai: 'OpenAI', deepseek: 'DeepSeek', openrouter: 'OpenRouter' };
     const pname = p => PNAME[p] || (providerOf(p) ? providerOf(p).name : p);
-    const DEFAULT_MODEL = { gemini: 'gemini-flash-latest', anthropic: 'claude-sonnet-5-5', openai: 'gpt-4o', deepseek: 'deepseek-chat', openrouter: 'openai/gpt-4o-mini', groq: 'llama-3.3-70b-versatile', mistral: 'mistral-large-latest', together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', perplexity: 'sonar-pro' };
+    const DEFAULT_MODEL = { groq: 'llama-3.3-70b-versatile', gemini: 'gemini-flash-latest', anthropic: 'claude-sonnet-5-5', openai: 'gpt-4o', deepseek: 'deepseek-chat', openrouter: 'openai/gpt-4o-mini', mistral: 'mistral-large-latest', together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', perplexity: 'sonar-pro' };
     const modelFor = p => ['gemini', 'anthropic', 'deepseek'].includes(p) ? pickModel(p, DEFAULT_MODEL[p]) : DEFAULT_MODEL[p];
     const ROLE = {
       design: ['anthropic', 'gemini', 'openai', 'openrouter', 'deepseek'],
