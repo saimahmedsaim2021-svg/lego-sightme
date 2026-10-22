@@ -49,6 +49,12 @@
   /* Shared form / button / modal styles */
   .inp { width: 100%; padding: .55rem .75rem; border-radius: .75rem; background: #121222; border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 12px; outline: none; transition: border-color .15s; }
   .inp:focus { border-color: #a855f7; }
+  .ide-btn { shrink: 0; flex-shrink: 0; display: inline-flex; align-items: center; gap: .375rem; padding: .3rem .65rem; border-radius: .6rem; font-size: 11px; font-weight: 500; white-space: nowrap; color: #a1a1aa; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); transition: background .15s, color .15s; }
+  .ide-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .ide-btn.on { background: rgba(168,85,247,.2); color: #e9d5ff; border-color: rgba(168,85,247,.4); }
+  .vfs-row { display: flex; align-items: center; gap: .4rem; padding: .3rem .75rem; cursor: pointer; color: #a1a1aa; border-left: 2px solid transparent; }
+  .vfs-row:hover { background: rgba(255,255,255,.05); color: #fff; }
+  .vfs-row.active { background: rgba(168,85,247,.15); color: #fff; border-left-color: #a855f7; }
   .ibtn { padding: .5rem; border-radius: .65rem; color: #a1a1aa; flex-shrink: 0; transition: background .15s, color .15s; }
   .ibtn:hover { background: rgba(255,255,255,.1); color: #fff; }
   .pbtn { flex: 1; padding: .65rem; border-radius: .75rem; font-size: 12px; font-weight: 600; background: linear-gradient(90deg,#9333ea,#22d3ee); color: #fff; }
@@ -222,8 +228,8 @@
         <div id="attachList" class="flex flex-wrap gap-2 mb-2 empty:hidden"></div>
         <div class="glass rounded-2xl p-2.5 focus-within:border-purple-500/50">
           <textarea id="promptInput" rows="1" placeholder="Instruct SAIM Agent... (e.g. Build a modern crypto dashboard with charts)" class="w-full resize-none bg-transparent px-2 py-1.5 text-sm placeholder-zinc-600 focus:outline-none max-h-40"></textarea>
-          <div class="flex items-center justify-between pt-2 gap-2">
-            <div class="flex flex-wrap items-center gap-0.5 min-w-0">
+          <div class="flex flex-wrap items-center justify-between pt-2 gap-2">
+            <div class="flex flex-wrap items-center gap-0.5 min-w-0 flex-1">
               <input id="fileInput" type="file" class="hidden" multiple accept=".txt,.md,.js,.ts,.json,.html,.css,.py,.csv" />
               <button id="btnUpload" class="ibtn" title="Attach file"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
               <button id="btnClear" class="ibtn" title="Clear chat"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -232,9 +238,9 @@
               <button id="btnVoiceMode" type="button" class="ibtn" title="Voice conversation"><i data-lucide="audio-lines" class="w-4 h-4"></i></button>
               <button id="btnSpeak" type="button" class="ibtn" title="Read replies aloud"><i data-lucide="volume-2" class="w-4 h-4"></i></button>
               <button id="btnVoiceLang" type="button" class="text-[10px] font-mono px-1.5 py-1 rounded-lg text-zinc-400 hover:bg-white/10" title="Voice language">EN</button>
-              <span id="keyGuardChip" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 whitespace-nowrap truncate max-w-[12rem] cursor-pointer hover:text-zinc-200" role="button" tabindex="0">⚡ Active: …</span>
+              <span id="keyGuardChip" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 whitespace-nowrap truncate max-w-[9rem] cursor-pointer hover:text-zinc-200" role="button" tabindex="0">⚡ Active: …</span>
             </div>
-            <div class="flex items-center gap-1.5">
+            <div class="flex flex-wrap items-center justify-end gap-1.5 ml-auto max-w-full">
               <button id="btnAbortStream" class="hidden px-2.5 py-1.5 rounded-xl bg-red-500/20 text-red-300 text-xs font-medium hover:bg-red-500/30">Stop</button>
               <button id="btnAutoAgent" type="button" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold hover:brightness-125 transition-all" title="Run Multi-Agent Pipeline"><i data-lucide="cpu" class="w-3.5 h-3.5"></i> Auto System</button>
               <button id="btnSend" class="shrink-0 inline-flex items-center gap-2 pl-4 pr-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-sm font-medium hover:brightness-110 disabled:opacity-40">Generate <i data-lucide="send-horizontal" class="w-3.5 h-3.5"></i></button>
@@ -263,10 +269,60 @@
           <button id="btnFix" class="ml-1 shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-pink-500/15 text-pink-200 hover:bg-pink-500/25"><i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i> Auto Fix</button>
         </div>
       </div>
+      <!-- IDE action bar -->
+      <div id="ideBar" class="shrink-0 h-10 flex items-center gap-1.5 px-2 sm:px-3 border-b border-white/5 bg-ink-900 overflow-x-auto noscroll">
+        <button data-ide-toggle="explorer" class="ide-btn" title="File Explorer"><i data-lucide="folder-tree" class="w-3.5 h-3.5"></i> Files</button>
+        <button data-ide-toggle="terminal" class="ide-btn" title="Terminal"><i data-lucide="terminal" class="w-3.5 h-3.5"></i> Terminal</button>
+        <span class="w-px h-5 bg-white/10 mx-1 shrink-0"></span>
+        <button data-ide-action="deploy" class="ide-btn !text-emerald-300"><i data-lucide="rocket" class="w-3.5 h-3.5"></i> 1-Click Deploy</button>
+        <button data-ide-action="pwa" class="ide-btn !text-cyan-300"><i data-lucide="smartphone" class="w-3.5 h-3.5"></i> Convert to PWA</button>
+        <button data-ide-action="security" class="ide-btn !text-red-300"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Security Audit</button>
+        <button data-ide-action="seo" class="ide-btn !text-amber-300"><i data-lucide="gauge" class="w-3.5 h-3.5"></i> SEO Optimize</button>
+        <button data-ide-action="history" class="ide-btn !text-purple-300"><i data-lucide="history" class="w-3.5 h-3.5"></i> Version History</button>
+        <span class="w-px h-5 bg-white/10 mx-1 shrink-0"></span>
+        <button data-ide-action="refactor" class="ide-btn"><i data-lucide="blocks" class="w-3.5 h-3.5"></i> Refactor</button>
+        <button data-ide-action="docs" class="ide-btn"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> README</button>
+        <button data-ide-action="tests" class="ide-btn"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> AI Tests</button>
+        <button data-ide-action="schema" class="ide-btn"><i data-lucide="database" class="w-3.5 h-3.5"></i> DB Schema</button>
+        <button data-ide-action="vision" class="ide-btn"><i data-lucide="image" class="w-3.5 h-3.5"></i> Image→Code</button>
+        <button data-ide-action="node" class="ide-btn"><i data-lucide="box" class="w-3.5 h-3.5"></i> Boot Node</button>
+        <button data-ide-action="sync" class="ide-btn"><i data-lucide="users" class="w-3.5 h-3.5"></i> Live Sync</button>
+        <span class="w-px h-5 bg-white/10 mx-1 shrink-0"></span>
+        <button data-ide-flag="ghost" class="ide-btn" title="Ghost text autocomplete (Tab to accept)"><i data-lucide="ghost" class="w-3.5 h-3.5"></i> Ghost</button>
+        <button data-ide-flag="heal" class="ide-btn" title="Auto-heal preview errors"><i data-lucide="heart-pulse" class="w-3.5 h-3.5"></i> Auto-Heal</button>
+      </div>
       <div class="flex-1 min-h-0 relative">
-        <div id="codeView" class="absolute inset-0 flex">
+        <div id="codeView" class="absolute inset-0 flex flex-col">
+         <div class="flex flex-1 min-h-0">
+          <!-- File Explorer (VFS) -->
+          <aside id="fileExplorer" class="hidden lg:flex flex-col shrink-0 w-48 border-r border-white/5 bg-ink-950/80 backdrop-blur">
+            <div class="flex items-center justify-between px-3 h-9 border-b border-white/5">
+              <span class="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase">Explorer</span>
+              <div class="flex items-center">
+                <button id="btnNewFile" class="ibtn !p-1" title="New file"><i data-lucide="file-plus" class="w-3.5 h-3.5"></i></button>
+                <button id="btnDelFile" class="ibtn !p-1" title="Delete active file"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </div>
+            <div id="fileTree" class="flex-1 min-h-0 overflow-y-auto py-1 text-[12px] font-mono"></div>
+          </aside>
           <div id="lineNums" class="shrink-0 w-11 py-3 text-right pr-2 text-[12px] leading-6 font-mono text-zinc-600 bg-ink-950/70 select-none overflow-hidden"></div>
           <textarea id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off" class="flex-1 min-w-0 bg-ink-950 text-zinc-200 font-mono text-[12.5px] leading-6 p-3 focus:outline-none"></textarea>
+         </div>
+         <!-- Terminal panel -->
+         <div id="terminalPanel" class="hidden shrink-0 h-48 flex-col border-t border-purple-500/30 bg-black/70 backdrop-blur">
+           <div class="flex items-center justify-between px-3 h-8 border-b border-white/5">
+             <span class="text-[10px] font-semibold tracking-widest text-cyan-400 uppercase flex items-center gap-1.5"><i data-lucide="terminal" class="w-3 h-3"></i> Terminal <span id="termStatus" class="text-zinc-500 normal-case tracking-normal">(local shell)</span></span>
+             <div class="flex items-center">
+               <button id="btnTermClear" class="ibtn !p-1" title="Clear"><i data-lucide="eraser" class="w-3.5 h-3.5"></i></button>
+               <button data-ide-toggle="terminal" class="ibtn !p-1" title="Close"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+             </div>
+           </div>
+           <div id="termOut" class="flex-1 min-h-0 overflow-y-auto px-3 py-2 font-mono text-[12px] leading-5 text-zinc-300 whitespace-pre-wrap break-words"></div>
+           <div class="flex items-center gap-2 px-3 h-8 border-t border-white/5 font-mono text-[12px]">
+             <span class="text-emerald-400">$</span>
+             <input id="termIn" type="text" autocomplete="off" spellcheck="false" placeholder="help" class="flex-1 min-w-0 bg-transparent text-zinc-200 placeholder-zinc-600 focus:outline-none" />
+           </div>
+         </div>
         </div>
         <div id="previewView" class="absolute inset-0 hidden bg-white">
           <iframe id="previewFrame" title="Live preview" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads"></iframe>
@@ -1481,7 +1537,7 @@ Assist the user with:
   const errorHook = () => '<script>(function(){function r(m){try{parent.postMessage({__sain:1,message:String(m)},"*")}catch(e){}}window.addEventListener("error",function(e){r((e.message||"Error")+(e.lineno?" (line "+e.lineno+")":""))});window.addEventListener("unhandledrejection",function(e){r("Promise error: "+((e.reason&&e.reason.message)||e.reason))});var ce=console.error;console.error=function(){r([].slice.call(arguments).join(" "));ce.apply(console,arguments)};})();<\/script>';
   function runPreview() {
     state.errors = []; updateErrBadge();
-    let src = state.code || DEFAULT_CODE;
+    let src = inlineVfsAssets(state.code || DEFAULT_CODE);
     src = /<head[^>]*>/i.test(src) ? src.replace(/<head[^>]*>/i, m => m + errorHook()) : errorHook() + src;
     frame.srcdoc = src;
   }
@@ -1601,12 +1657,12 @@ Assist the user with:
       } catch (e) { acc.textContent = 'Not connected'; btn.textContent = 'Sign in with GitHub'; }
     }
   }
+ /* ---------- GitHub Push (Multi-file support) ---------- */
   bind('#btnPushGithub', 'click', async () => {
     const btn = $('#btnPushGithub');
     if (!state.githubToken) { if (await signIn('github')) ghRefresh(); return; }
     if (!state.code.trim()) return toast('No code to push');
     const repo = $('#ghRepo').value.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '').replace(/^\/+|\/+$/g, '');
-    const path = $('#ghPath').value.trim().replace(/^\/+/, '') || 'index.html';
     const msg = $('#ghMsg').value.trim() || 'Update from SAIM AI AGENT';
     if (!repo) return toast('Enter a repository name');
     btn.disabled = true; btn.textContent = 'Pushing...';
@@ -1625,21 +1681,35 @@ Assist the user with:
         r = await ghCall('/user/repos', { method: 'POST', body: JSON.stringify({ name, private: $('#ghPrivate').checked }) });
         if (!r.ok) throw new Error((await r.json()).message || 'Could not create repository');
       } else if (!r.ok) throw new Error('GitHub error ' + r.status);
-      const filePath = path.split('/').map(encodeURIComponent).join('/');
-      let sha;
-      const ex = await ghCall(base + '/contents/' + filePath);
-      if (ex.ok) sha = (await ex.json()).sha;
-      const put = await ghCall(base + '/contents/' + filePath, { method: 'PUT', body: JSON.stringify({ message: msg, content: b64(state.code), sha }) });
-      const out = await put.json();
-      if (!put.ok) throw new Error(out.message || 'Push failed');
+      
+      // VFS থেকে সব ফাইল গিটহাবে পুশ করার লজিক
+      const files = vfs.list();
+      for (const fileName of files) {
+        const filePath = fileName.split('/').map(encodeURIComponent).join('/');
+        const content = vfs.getFileContent(fileName);
+        let sha;
+        const ex = await ghCall(base + '/contents/' + filePath);
+        if (ex.ok) sha = (await ex.json()).sha;
+        const put = await ghCall(base + '/contents/' + filePath, { 
+          method: 'PUT', 
+          body: JSON.stringify({ message: msg + ` (${fileName})`, content: b64(content), sha }) 
+        });
+        if (!put.ok) throw new Error('Failed to push ' + fileName);
+      }
+      
       store.set('sain.ghRepo', repo);
-      const box = $('#githubResult'), link = out.content && out.content.html_url;
-      box.innerHTML = 'Pushed: <a href="' + esc(link) + '" target="_blank" rel="noopener" class="underline font-bold">' + esc(link) + '</a>';
-      box.classList.remove('hidden'); toast('Pushed to GitHub');
-    } catch (err) { toast('Push failed: ' + err.message, 4000); ghRefresh(); }
-    finally { btn.disabled = false; if (state.githubToken) btn.textContent = 'Push to GitHub'; }
+      const box = $('#githubResult'), link = `https://github.com/${owner}/${name}`;
+      box.innerHTML = 'Pushed all files: <a href="' + esc(link) + '" target="_blank" rel="noopener" class="underline font-bold">' + esc(link) + '</a>';
+      box.classList.remove('hidden'); 
+      toast('All files pushed to GitHub successfully!');
+    } catch (err) { 
+      toast('Push failed: ' + err.message, 4000); 
+      ghRefresh(); 
+    } finally { 
+      btn.disabled = false; 
+      if (state.githubToken) btn.textContent = 'Push to GitHub'; 
+    }
   });
-
   /* ---------- Auto fix ---------- */
   bind('#btnFix', 'click', async () => {
     if (!state.code.trim()) return toast('No code to audit');
@@ -2335,6 +2405,449 @@ Assist the user with:
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && document.activeElement === editor) { e.preventDefault(); e.shiftKey ? redoCode() : undoCode(); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && document.activeElement === editor) { e.preventDefault(); redoCode(); }
   });
+
+
+  /* =====================================================================
+     MODULE 1: Virtual File System (VFS) + IDE shell (Explorer, Terminal, Actions)
+     - index.html is the live document: it is always state.code (single source of truth)
+     - every other file lives only in the VFS and is persisted to localStorage
+     ===================================================================== */
+  const MAIN_FILE = 'index.html';
+  const vfs = {
+    files: store.get('sain.vfs', {}) || {},
+    active: MAIN_FILE,
+
+    typeOf(name) { const e = (name.split('.').pop() || '').toLowerCase(); return ({ html: 'html', css: 'css', js: 'js', json: 'json', md: 'markdown', prisma: 'prisma' })[e] || 'text'; },
+    icon(name) { return ({ html: 'file-code-2', css: 'palette', js: 'braces', json: 'file-json', markdown: 'file-text', prisma: 'database' })[this.typeOf(name)] || 'file'; },
+    list() { return [MAIN_FILE].concat(Object.keys(this.files).filter(n => n !== MAIN_FILE).sort()); },
+    exists(name) { return name === MAIN_FILE || Object.prototype.hasOwnProperty.call(this.files, name); },
+
+    getFileContent(name) {
+      if (name === MAIN_FILE) return state.code || '';
+      return this.files[name] ? this.files[name].content : '';
+    },
+    persist() { const o = {}; for (const n in this.files) if (n !== MAIN_FILE) o[n] = this.files[n]; store.set('sain.vfs', o); },
+
+    // Create or overwrite a file. index.html goes through setCode so history/preview/Firebase keep working.
+    updateFile(name, content, type, run) {
+      name = String(name || '').trim(); if (!name) return;
+      if (name === MAIN_FILE) { setCode(content, run === true); return; }
+      this.files[name] = { content: String(content == null ? '' : content), type: type || this.typeOf(name) };
+      this.persist(); this.renderTree();
+      if (this.active === name) editor.value = this.files[name].content, updateLineNums();
+    },
+    remove(name) {
+      if (name === MAIN_FILE) return toast('index.html cannot be deleted');
+      delete this.files[name]; this.persist();
+      if (this.active === name) this.open(MAIN_FILE); else this.renderTree();
+    },
+    // Bulk import, e.g. the Componentizer agent's { "filename": "content" } JSON
+    importMap(map) { Object.entries(map || {}).forEach(([n, c]) => this.updateFile(n, typeof c === 'string' ? c : (c && c.content) || '')); },
+
+    open(name) {
+      if (!this.exists(name)) return;
+      if (this.active !== MAIN_FILE) { const f = this.files[this.active]; if (f) f.content = editor.value; this.persist(); }
+      this.active = name;
+      editor.value = this.getFileContent(name); updateLineNums(); this.renderTree();
+      setView('code');
+    },
+
+    // Whole-project context for the AI (Technical Writer, Refactor, Security...)
+    getAllFilesForAI() {
+      let ctx = 'PROJECT FILES:\n';
+      this.list().forEach(n => { ctx += '\n--- File: ' + n + ' ---\n```\n' + this.getFileContent(n) + '\n```\n'; });
+      return ctx;
+    },
+    // Shape required by WebContainer.mount(): { 'a.js': { file: { contents } } }
+    getAllForWebContainer() {
+      const t = {}; this.list().forEach(n => { t[n] = { file: { contents: this.getFileContent(n) } }; }); return t;
+    },
+
+    renderTree() {
+      const box = $('#fileTree'); if (!box) return;
+      box.innerHTML = this.list().map(n =>
+        '<div class="vfs-row' + (n === this.active ? ' active' : '') + '" data-vfs="' + esc(n) + '"><i data-lucide="' + this.icon(n) + '" class="w-3.5 h-3.5 shrink-0"></i><span class="truncate">' + esc(n) + '</span></div>').join('');
+      icons();
+    }
+  };
+  const fileSystem = vfs; // alias so the later modules (2-18) can use the original name
+
+  // Keep VFS consistent when other code (AI output, undo, patches) calls setCode()
+  const _setCodeOrig = setCode;
+  setCode = function (code, run, record) {
+    if (vfs.active !== MAIN_FILE) { const f = vfs.files[vfs.active]; if (f) f.content = editor.value; vfs.active = MAIN_FILE; }
+    _setCodeOrig(code, run, record); vfs.renderTree();
+  };
+
+  // When a non-index file is open, edits go to the VFS and must NOT touch state.code / the preview
+  editor.addEventListener('input', e => {
+    if (vfs.active === MAIN_FILE) return;
+    e.stopImmediatePropagation();
+    const f = vfs.files[vfs.active]; if (f) { f.content = editor.value; clearTimeout(vfs._t); vfs._t = setTimeout(() => vfs.persist(), 500); }
+    updateLineNums();
+  }, true);
+
+  delegate('[data-vfs]', 'click', (e, t) => vfs.open(t.dataset.vfs));
+  bind('#btnNewFile', 'click', () => {
+    const n = (prompt('New file name (e.g. style.css)') || '').trim().replace(/[^\w.\-\/]/g, '');
+    if (!n) return; if (vfs.exists(n)) return toast('File already exists');
+    vfs.updateFile(n, '', vfs.typeOf(n)); vfs.open(n);
+  });
+  bind('#btnDelFile', 'click', () => { if (vfs.active !== MAIN_FILE && confirm('Delete ' + vfs.active + '?')) vfs.remove(vfs.active); else if (vfs.active === MAIN_FILE) toast('index.html cannot be deleted'); });
+
+  /* ---------- Terminal panel (UI + local shell; WebContainer plugs in at Module 14) ---------- */
+  const term = {
+    out: $('#termOut'), hist: [], hi: 0,
+    print(text, cls) { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = text; this.out.appendChild(d); this.out.scrollTop = this.out.scrollHeight; },
+    clear() { this.out.innerHTML = ''; },
+    runner: null, // Module 14 sets this: async (argv) => void, to execute real npm/node commands
+    async exec(line) {
+      line = line.trim(); if (!line) return;
+      this.print('$ ' + line, 'text-emerald-400'); this.hist.push(line); this.hi = this.hist.length;
+      const [cmd, ...args] = line.split(/\s+/);
+      if (cmd === 'help') return this.print('Built-in: help, ls, cat <file>, clear\nnpm / node / npx commands need the WebContainer (Module 14).');
+      if (cmd === 'clear') return this.clear();
+      if (cmd === 'ls') return this.print(vfs.list().join('\n'));
+      if (cmd === 'cat') return this.print(vfs.exists(args[0]) ? vfs.getFileContent(args[0]) : 'cat: ' + (args[0] || '') + ': No such file', vfs.exists(args[0]) ? '' : 'text-red-400');
+      if (this.runner) { try { await this.runner([cmd, ...args]); } catch (err) { this.print(String(err.message || err), 'text-red-400'); } return; }
+      this.print(cmd + ': WebContainer is not booted yet (added in the next chunk).', 'text-amber-400');
+    }
+  };
+  term.print('SAIM Terminal ready. Type "help".', 'text-zinc-500');
+  bind('#btnTermClear', 'click', () => term.clear());
+  bind('#termIn', 'keydown', e => {
+    const i = e.target;
+    if (e.key === 'Enter') { const v = i.value; i.value = ''; term.exec(v); }
+    else if (e.key === 'ArrowUp' && term.hist.length) { term.hi = Math.max(0, term.hi - 1); i.value = term.hist[term.hi] || ''; e.preventDefault(); }
+    else if (e.key === 'ArrowDown' && term.hist.length) { term.hi = Math.min(term.hist.length, term.hi + 1); i.value = term.hist[term.hi] || ''; e.preventDefault(); }
+  });
+
+  /* ---------- Panel toggles + action registry ---------- */
+  const idePanels = { explorer: '#fileExplorer', terminal: '#terminalPanel' };
+  function toggleIdePanel(name, forceOpen) {
+    const el = $(idePanels[name]); if (!el) return;
+    const show = el.classList.contains('hidden');
+    if (forceOpen && !show) return;
+    el.classList.toggle('hidden', !show);
+    el.classList.toggle('flex', show);
+    $$('[data-ide-toggle="' + name + '"]', $('#ideBar')).forEach(b => b.classList.toggle('on', show));
+    if (show && name === 'terminal') setTimeout(() => $('#termIn').focus(), 50);
+  }
+  delegate('[data-ide-toggle]', 'click', (e, t) => toggleIdePanel(t.dataset.ideToggle));
+
+  // Each action is wired to its AI agent in the next chunk (Modules 5-17). Until then they report status.
+  const ideActions = {};
+  ['deploy', 'pwa', 'security', 'seo', 'history'].forEach(k => { ideActions[k] = () => toast(k + ' action will be connected in the next chunk'); });
+  delegate('[data-ide-action]', 'click', (e, t) => (ideActions[t.dataset.ideAction] || (() => {}))());
+
+  // Public namespace so later modules can register themselves without touching this block
+  window.SAIM = { vfs, term, ideActions, toggleIdePanel };
+  vfs.renderTree(); toggleIdePanel('explorer');
+
+
+  /* =====================================================================
+     CHUNK 2: AI agents, Ghost Text, Auto-Heal, Deploy, PWA, History, Node, Sync
+     ===================================================================== */
+  const IDE = {
+    flags: Object.assign({ ghost: true, heal: true }, store.get('sain.ideFlags', {})),
+    byok() { try { return !!isUserByokActive(); } catch (e) { return false; } },
+    async ai(system, user) {
+      const r = await runUnifiedStream([{ role: 'user', content: user }], { system });
+      if (r && r.limited) throw new Error('Add your own API key (Keys) to use this feature');
+      return (r && r.text) || '';
+    },
+    strip(t) { const m = String(t).match(/```[a-z]*\r?\n([\s\S]*?)```/i); return (m ? m[1] : String(t)).trim(); },
+    async busy(label, fn) {
+      if (state.busy) return toast('Please wait, another task is running');
+      state.busy = true; toast(label + '...', 3000);
+      try { await fn(); } catch (e) { toast(label + ' failed: ' + (e.message || e), 4500); term.print(label + ' failed: ' + (e.message || e), 'text-red-400'); }
+      finally { state.busy = false; }
+    }
+  };
+  const PATCH_FORMAT = '\nWhen changing existing code return ONLY patch blocks in this exact format (exact text from the code in SEARCH):\n<<<<<<< SEARCH\n(old code)\n=======\n(new code)\n>>>>>>> REPLACE';
+
+  /* ---------- Preview: inline VFS css/js so multi-file projects render ---------- */
+  function inlineVfsAssets(src) {
+    return src
+      .replace(/<link\b[^>]*href=["']([^"']+)["'][^>]*>/gi, (m, h) => (/stylesheet/i.test(m) && vfs.files[h.replace(/^\.?\//, '')]) ? '<style>' + vfs.files[h.replace(/^\.?\//, '')].content + '</style>' : m)
+      .replace(/<script\b[^>]*src=["']([^"']+)["'][^>]*>\s*<\/script>/gi, (m, h) => vfs.files[h.replace(/^\.?\//, '')] ? '<script>' + vfs.files[h.replace(/^\.?\//, '')].content.replace(/<\/script/gi, '<\\/script') + '<\/script>' : m);
+  }
+
+  /* ---------- Version History (Module: snapshots in localStorage) ---------- */
+  const versions = {
+    list: store.get('sain.versions', []), last: 0,
+    snap(label, force) {
+      if (!state.code || !state.code.trim()) return;
+      if (!force && Date.now() - this.last < 15000) return;
+      if (this.list[0] && this.list[0].code === state.code) return;
+      this.last = Date.now();
+      this.list.unshift({ id: uid(), t: Date.now(), label: label || 'auto', code: state.code });
+      if (this.list.length > 30) this.list.length = 30;
+      while (!store.set('sain.versions', this.list) && this.list.length > 3) this.list.pop();
+    },
+    open() {
+      this.snap('manual', true);
+      $('#historyList').innerHTML = this.list.map(v => '<div class="flex items-center gap-3 p-3 rounded-xl bg-white/5"><div class="min-w-0 flex-1"><div class="text-xs text-zinc-200">' + esc(new Date(v.t).toLocaleString()) + '</div><div class="text-[11px] text-zinc-500">' + esc(v.label) + ' · ' + v.code.length + ' chars</div></div><button class="ide-btn" data-ver="' + v.id + '">Restore</button></div>').join('') || '<div class="text-xs text-zinc-500">No versions yet</div>';
+      openModal('#modalHistory');
+    }
+  };
+  document.body.insertAdjacentHTML('beforeend', '<div id="modalHistory" class="modal"><div class="bg" data-close></div><div class="mbox fade-in"><div class="mhead"><h3 class="font-semibold text-base">Version History</h3><button data-close class="ibtn" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button></div><div id="historyList" class="mbody"></div></div></div>');
+  delegate('[data-ver]', 'click', (e, t) => {
+    const v = versions.list.find(x => x.id === t.dataset.ver); if (!v) return;
+    versions.snap('before restore', true); setCode(v.code, true); closeModal($('#modalHistory')); toast('Version restored');
+  });
+  const _setCodeV = setCode;
+  setCode = function (code, run, record) { if (record !== false) versions.snap('auto'); _setCodeV(code, run, record); };
+
+  /* ---------- Module 13: Ghost Text / inline autocomplete ---------- */
+  const ghost = { text: '', t: null, seq: 0, inner: null };
+  (function () {
+    const w = document.createElement('div'); w.className = 'relative flex flex-1 min-w-0';
+    editor.parentNode.insertBefore(w, editor); w.appendChild(editor);
+    const L = document.createElement('div'); L.className = 'absolute inset-0 overflow-hidden pointer-events-none';
+    L.innerHTML = '<pre class="m-0 p-3 font-mono text-[12.5px] leading-6 whitespace-pre text-transparent" style="tab-size:2"></pre>';
+    w.appendChild(L); ghost.inner = L.firstChild;
+  })();
+  function ghostPos() { ghost.inner.style.transform = 'translate(' + (-editor.scrollLeft) + 'px,' + (-editor.scrollTop) + 'px)'; }
+  function ghostClear() { ghost.text = ''; ghost.seq++; clearTimeout(ghost.t); ghost.inner.innerHTML = ''; }
+  function ghostShow(text, pos) {
+    ghost.text = text; ghostPos();
+    ghost.inner.innerHTML = esc(editor.value.slice(0, pos)) + '<span style="color:#71717a;background:#09090b">' + esc(text) + '</span>';
+  }
+  const GHOST_SYS = 'You are an inline code autocomplete engine. Continue the code exactly where it stops. Reply with ONLY the next 1-6 lines of raw code. No markdown, no explanation, never repeat existing code.';
+  editor.addEventListener('input', () => {
+    ghostClear();
+    if (!IDE.flags.ghost || !IDE.byok() || state.busy) return;
+    const pos = editor.selectionStart; if (pos !== editor.selectionEnd) return;
+    if (editor.value.slice(pos).split('\n')[0].trim()) return;          // only at end of line
+    const before = editor.value.slice(0, pos); if (before.trim().length < 15) return;
+    const my = ++ghost.seq;
+    ghost.t = setTimeout(async () => {
+      try {
+        let t = await IDE.ai(GHOST_SYS, 'File: ' + vfs.active + '\n' + before.slice(-3000));
+        if (/```/.test(t)) t = IDE.strip(t);
+        t = t.replace(/\s+$/, '').split('\n').slice(0, 6).join('\n');
+        if (my !== ghost.seq || editor.selectionStart !== pos || !t) return;
+        ghostShow((/^\s/.test(t) || before.endsWith('\n') ? '' : '') + t, pos);
+      } catch (e) { /* silent: autocomplete must never interrupt typing */ }
+    }, 900);
+  }, true);
+  editor.addEventListener('keydown', e => {
+    if (!ghost.text) return;
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      const t = ghost.text, p = editor.selectionStart; ghostClear();
+      editor.setRangeText(t, p, p, 'end'); editor.dispatchEvent(new Event('input'));
+    } else if (e.key === 'Escape') ghostClear();
+  }, true);
+  editor.addEventListener('scroll', ghostPos); editor.addEventListener('blur', ghostClear);
+  editor.addEventListener('click', ghostClear);
+
+  /* ---------- Module 5: Autonomous Error Healing (preview console errors) ---------- */
+  const heal = { n: 0, t: null, warned: false };
+  window.addEventListener('message', e => {
+    if (e.source !== frame.contentWindow || !e.data || !e.data.__sain) return;
+    if (!IDE.flags.heal || !IDE.byok()) return;
+    clearTimeout(heal.t);
+    heal.t = setTimeout(() => {
+      if (state.busy || !state.errors.length) return;
+      if (heal.n >= 3) { if (!heal.warned) { heal.warned = true; toast('Auto-heal paused after 3 tries. Use Auto Fix manually.', 4000); } return; }
+      heal.n++; toast('Auto-heal: fixing preview errors (' + heal.n + '/3)...', 3000);
+      $('#btnFix').click();
+      setTimeout(() => { if (!state.errors.length) { heal.n = 0; heal.warned = false; } }, 12000);
+    }, 2500);
+  });
+  editor.addEventListener('input', () => { heal.n = 0; heal.warned = false; });
+
+  /* ---------- Module 10: Security Auditor ---------- */
+  const SEC_PROMPT = 'You are a Cybersecurity Expert. Review the HTML/JS for: 1) XSS, 2) external CDN scripts without integrity, 3) hardcoded API keys/secrets, 4) dangerous functions (eval, innerHTML without sanitising). If issues are found, fix them. If secure, reply exactly: SECURE.' + PATCH_FORMAT;
+  function staticScan(code) {
+    const out = [];
+    [[/\beval\s*\(/, 'eval() used'], [/new\s+Function\s*\(/, 'new Function() used'], [/document\.write\s*\(/, 'document.write() used'], [/\.innerHTML\s*=/, 'innerHTML assignment (sanitise user data)'],
+     [/AIza[0-9A-Za-z_\-]{35}|sk-[A-Za-z0-9_\-]{20,}|ghp_[A-Za-z0-9]{30,}/, 'possible hardcoded API key']].forEach(([re, msg]) => { if (re.test(code)) out.push(msg); });
+    (code.match(/<script\b[^>]*src=["']https?:[^>]*>/gi) || []).forEach(t => { if (!/integrity=/i.test(t)) out.push('CDN script without integrity: ' + t.slice(0, 90)); });
+    return out;
+  }
+  async function scanForVulnerabilities() {
+    const found = staticScan(state.code);
+    toggleIdePanel('terminal', true);
+    term.print('[security] static scan: ' + (found.length ? found.length + ' finding(s)' : 'clean'), 'text-red-300');
+    found.forEach(f => term.print('  - ' + f, 'text-amber-300'));
+    const res = await IDE.ai(SEC_PROMPT, state.code);
+    if (/^\W*SECURE\W*$/i.test(res.trim())) return toast('Security scan passed: no vulnerabilities found', 4000);
+    const r = await applyAiOutput(res);
+    toast(r.applied ? 'Security fixes applied' : 'AI reported issues but no patch could be applied (see terminal)', 4500);
+  }
+
+  /* ---------- Module 17: SEO & performance ---------- */
+  async function optimizeAppPerformance() {
+    const sys = 'Act as an SEO and web performance expert (like Lighthouse). Add missing meta tags (description, viewport, Open Graph), aria-labels, alt text, loading="lazy" for images, defer for scripts. Do not change the visual design or behaviour.' + PATCH_FORMAT;
+    const r = await applyAiOutput(await IDE.ai(sys, state.code));
+    toast(r.applied ? 'SEO & performance improvements applied' : 'No changes were applied');
+  }
+
+  /* ---------- Convert to PWA (local, no AI) ---------- */
+  function convertToPWA() {
+    let c = state.code; if (!c.trim()) return toast('No code');
+    if (/rel=["']manifest["']/i.test(c)) return toast('Already a PWA');
+    const name = ((c.match(/<title>([^<]*)<\/title>/i) || [])[1] || 'My App').trim();
+    const icon = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#7c3aed"/><text x="256" y="340" font-size="260" text-anchor="middle" fill="#fff" font-family="sans-serif">' + esc(name.charAt(0).toUpperCase()) + '</text></svg>');
+    vfs.updateFile('manifest.json', JSON.stringify({ name, short_name: name.slice(0, 12), start_url: './index.html', display: 'standalone', background_color: '#09090b', theme_color: '#7c3aed', icons: [{ src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] }, null, 2), 'json');
+    vfs.updateFile('sw.js', "const C='app-v1',A=" + JSON.stringify(['./', './index.html'].concat(vfs.list().filter(n => n !== 'index.html' && n !== 'sw.js'))) + ";\nself.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A))));\nself.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));", 'js');
+    const head = '<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#7c3aed">';
+    const reg = '<script>if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js");<\/script>';
+    c = /<\/head>/i.test(c) ? c.replace(/<\/head>/i, head + '</head>') : head + c;
+    c = /<\/body>/i.test(c) ? c.replace(/<\/body>/i, reg + '</body>') : c + reg;
+    setCode(c, false); toast('PWA files added (manifest.json, sw.js). Deploy all files together to install.', 5000);
+  }
+
+  /* ---------- 1-Click Deploy (Netlify file-digest API, runs in your browser) ---------- */
+  async function sha1(str) { const b = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }
+  async function deployNetlify() {
+    let tok = sstore.get('sain.netlifyToken', '');
+    if (!tok) { tok = (prompt('Netlify personal access token (kept only for this browser tab)') || '').trim(); if (!tok) return; sstore.set('sain.netlifyToken', tok); }
+    const H = { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, API = 'https://api.netlify.com/api/v1';
+    const check = async r => { if (!r.ok) { if (r.status === 401) sstore.set('sain.netlifyToken', ''); throw new Error('Netlify ' + r.status); } return r.json(); };
+    let site = store.get('sain.netlifySite', '');
+    if (!site) { site = (await check(await fetch(API + '/sites', { method: 'POST', headers: H, body: '{}' }))).id; store.set('sain.netlifySite', site); }
+    const names = vfs.list(), digest = {}, byHash = {};
+    for (const n of names) { const h = await sha1(vfs.getFileContent(n)); digest['/' + n] = h; byHash[h] = n; }
+    const dep = await check(await fetch(API + '/sites/' + site + '/deploys', { method: 'POST', headers: H, body: JSON.stringify({ files: digest }) }));
+    for (const h of dep.required || []) {
+      const n = byHash[h]; if (!n) continue;
+      await check(await fetch(API + '/deploys/' + dep.id + '/files/' + n.split('/').map(encodeURIComponent).join('/'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/octet-stream' }, body: vfs.getFileContent(n) }));
+    }
+    const url = dep.ssl_url || dep.url; term.print('[deploy] live: ' + url, 'text-emerald-400'); toggleIdePanel('terminal', true);
+    try { await navigator.clipboard.writeText(url); } catch (e) {}
+    toast('Deployed! URL copied: ' + url, 6000);
+  }
+
+  /* ---------- Module 9: Componentizer ---------- */
+  const componentAgent = { prompt: 'You are a Senior Software Architect. Break this monolithic HTML/JS file into modular files (separate .css, .js, optional Web Components via customElements.define). Return ONLY a valid JSON object mapping filename to full file content. It MUST include a rewritten "index.html" that references the other files with <link href="x.css"> and <script src="x.js">.' };
+  async function refactorIntoComponents() {
+    const raw = IDE.strip(await IDE.ai(componentAgent.prompt, state.code));
+    let obj; try { obj = JSON.parse(raw); } catch (e) { throw new Error('AI did not return valid JSON'); }
+    if (!obj || typeof obj !== 'object' || !obj['index.html']) throw new Error('JSON must contain index.html');
+    vfs.importMap(obj); vfs.open('index.html'); setCode(state.code, true); toast(Object.keys(obj).length + ' files created. Preview inlines them automatically.', 5000);
+  }
+
+  /* ---------- Module 11: Technical Writer ---------- */
+  async function generateDocumentation() {
+    const sys = 'You are a Technical Writer. From the project files below write a professional, detailed README.md: title & description, features, tech stack, setup & run, folder tree. Return only the markdown.\n\n' + vfs.getAllFilesForAI();
+    vfs.updateFile('README.md', IDE.strip(await IDE.ai(sys, 'Generate README.md')), 'markdown'); vfs.open('README.md'); toast('README.md created');
+  }
+
+  /* ---------- Module 16: Backend architect ---------- */
+  async function generateBackend() {
+    const req = (prompt('Describe your app/data (e.g. blog with users, posts, comments)') || '').trim(); if (!req) return;
+    const sys = 'You are a Database Architect. Generate a production-ready Prisma schema (schema.prisma) with all models, relations (1-N, N-M) and enums. Output ONLY raw Prisma code.';
+    vfs.updateFile('schema.prisma', IDE.strip(await IDE.ai(sys, 'Request: ' + req + '\n\nExisting app:\n' + state.code.slice(0, 6000))), 'prisma'); vfs.open('schema.prisma'); toast('schema.prisma created');
+  }
+
+  /* ---------- Module 15: AI QA tester (sandboxed iframe) ---------- */
+  function runInSandbox(code, tests, ms) {
+    return new Promise(res => {
+      const f = document.createElement('iframe'); f.sandbox = 'allow-scripts'; f.style.display = 'none';
+      const tok = uid(), fails = []; let done = false;
+      const fin = () => { if (done) return; done = true; removeEventListener('message', h); clearTimeout(to); f.remove(); res({ passed: !fails.length, failures: fails }); };
+      const h = e => { if (e.source !== f.contentWindow || !e.data || e.data.tok !== tok) return; if (e.data.fail) fails.push(e.data.fail); if (e.data.end) fin(); };
+      const to = setTimeout(() => { fails.push('timeout: tests did not finish'); fin(); }, ms || 8000);
+      addEventListener('message', h);
+      const hook = '<script>(function(){var T=' + JSON.stringify(tok) + ';function s(o){o.tok=T;parent.postMessage(o,"*")}console.assert=function(c){if(!c)s({fail:"assert failed: "+[].slice.call(arguments,1).join(" ")})};window.__end=function(){s({end:1})};window.__fail=function(e){s({fail:"test error: "+e.message})};window.addEventListener("error",function(e){s({fail:"error: "+e.message})})})();<\/script>';
+      const run = '<script>window.addEventListener("load",function(){setTimeout(function(){try{\n' + tests.replace(/<\/script/gi, '<\\/script') + '\n}catch(e){__fail(e)}__end()},300)});<\/script>';
+      document.body.appendChild(f); f.srcdoc = hook + inlineVfsAssets(code) + run;
+    });
+  }
+  async function runTestSuite() {
+    const sys = 'Write 3-6 browser tests in plain JavaScript using console.assert(condition, message) for this single-file HTML app. They run after page load in the same window (use document.querySelector and the app\'s global functions). Reply ONLY with raw JavaScript.';
+    const tests = IDE.strip(await IDE.ai(sys, state.code)); vfs.updateFile('tests.js', tests, 'js');
+    toggleIdePanel('terminal', true); term.print('[tests] running ' + tests.split('\n').length + ' lines of tests...', 'text-cyan-300');
+    const r = await runInSandbox(state.code, tests);
+    if (r.passed) { term.print('[tests] all passed', 'text-emerald-400'); return toast('All tests passed'); }
+    r.failures.forEach(f => term.print('  x ' + f, 'text-red-400'));
+    toast('Tests failed. Auto-heal is fixing the code...', 3500);
+    state.errors = r.failures.slice(); updateErrBadge(); state.busy = false; $('#btnFix').click(); state.busy = true;
+  }
+
+  /* ---------- Module 12: Vision to code (Gemini key required; chat streaming has no image path) ---------- */
+  async function visionToCode() {
+    const key = state.keys && state.keys.gemini; if (!key) throw new Error('Add a Gemini API key in Keys for image input');
+    const file = await new Promise(r => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/png,image/jpeg,image/webp'; i.onchange = () => r(i.files[0]); i.click(); });
+    if (!file) return; if (file.size > 4 * 1024 * 1024) throw new Error('Image is over 4MB');
+    const b64 = await new Promise((r, j) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.onerror = j; fr.readAsDataURL(file); });
+    const prompt = 'You are an expert frontend developer. Replicate this UI design as ONE complete responsive HTML file using Tailwind CSS (CDN). Guess colors, spacing and layout as accurately as possible. Return it in a single ```html block.';
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key.trim() }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: file.type, data: b64 } }] }] }) });
+    if (!r.ok) throw new Error('Gemini ' + r.status);
+    const j = await r.json(); const text = (((j.candidates || [])[0] || {}).content || {}).parts; const out = (text || []).map(x => x.text || '').join('');
+    const m = out.match(/```html\s*([\s\S]*?)```/i); if (!m) throw new Error('No HTML returned');
+    setCode(m[1].trim(), true); toast('UI replicated from image');
+  }
+
+  /* ---------- Module 14: WebContainer (real Node.js in the browser) ---------- */
+  const node = {
+    wc: null,
+    tree() {
+      const root = {};
+      vfs.list().forEach(n => { const parts = n.split('/').filter(Boolean); let d = root; parts.forEach((p, i) => { if (i === parts.length - 1) d[p] = { file: { contents: vfs.getFileContent(n) } }; else d = (d[p] = d[p] || { directory: {} }).directory; }); });
+      return root;
+    },
+    async boot() {
+      if (this.wc) return;
+      if (!window.crossOriginIsolated) throw new Error('WebContainer needs cross-origin isolation. Serve this page with headers Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp.');
+      toggleIdePanel('terminal', true); term.print('Booting Node.js environment...', 'text-cyan-300');
+      const { WebContainer } = await import('https://esm.sh/@webcontainer/api@1.1.9');
+      this.wc = await WebContainer.boot(); await this.wc.mount(this.tree());
+      term.runner = async argv => {
+        await this.wc.mount(this.tree());
+        const p = await this.wc.spawn(argv[0], argv.slice(1));
+        p.output.pipeTo(new WritableStream({ write(d) { term.print(String(d).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '')); } }));
+        const code = await p.exit; term.print('exit code ' + code, code ? 'text-red-400' : 'text-zinc-500');
+      };
+      $('#termStatus').textContent = '(Node.js ready)'; term.print('Ready. Try: npm install', 'text-emerald-400');
+    }
+  };
+
+  /* ---------- Module 18: Real-time multiplayer (Firebase Realtime Database) ---------- */
+  const sync = {
+    room: null, ref: null, id: uid(), t: null,
+    join(room) {
+      if (!fb.db) throw new Error('Firebase Realtime Database is not configured');
+      this.leave(); this.room = room; this.ref = fb.db.ref('projects/' + room + '/files');
+      this.ref.on('value', snap => { const d = snap.val(); if (d && d.by !== this.id && typeof d.code === 'string' && d.code !== state.code) setCode(d.code, true, false); });
+      toast('Live sync on: room ' + room, 4000); $$('[data-ide-action="sync"]').forEach(b => b.classList.add('on'));
+    },
+    leave() { if (this.ref) { try { this.ref.off(); } catch (e) {} } this.ref = null; this.room = null; $$('[data-ide-action="sync"]').forEach(b => b.classList.remove('on')); },
+    broadcast() { if (!this.ref || vfs.active !== MAIN_FILE) return; clearTimeout(this.t); this.t = setTimeout(() => { try { this.ref.update({ code: state.code, by: this.id, timestamp: Date.now() }); } catch (e) {} }, 600); }
+  };
+  editor.addEventListener('input', () => sync.broadcast());
+
+  /* ---------- Wire actions + flags ---------- */
+  Object.assign(ideActions, {
+    deploy: () => IDE.busy('Deploying', deployNetlify),
+    pwa: convertToPWA,
+    security: () => IDE.busy('Security audit', scanForVulnerabilities),
+    seo: () => IDE.busy('SEO optimize', optimizeAppPerformance),
+    history: () => versions.open(),
+    refactor: () => IDE.busy('Refactoring', refactorIntoComponents),
+    docs: () => IDE.busy('Writing README', generateDocumentation),
+    tests: () => IDE.busy('AI tests', runTestSuite),
+    schema: () => IDE.busy('Designing schema', generateBackend),
+    vision: () => IDE.busy('Image to code', visionToCode),
+    node: () => IDE.busy('Booting Node', () => node.boot()),
+    sync: () => {
+      if (sync.room) { sync.leave(); return toast('Live sync stopped'); }
+      const r = (prompt('Room name to join or create (share it with your teammate)') || '').trim().replace(/[^\w\-]/g, '');
+      if (r) try { sync.join(r); } catch (e) { toast(e.message, 4000); }
+    }
+  });
+  window.SAIM.IDE = IDE; window.SAIM.versions = versions; window.SAIM.node = node; window.SAIM.sync = sync;
+  const paintFlags = () => $$('[data-ide-flag]').forEach(b => b.classList.toggle('on', !!IDE.flags[b.dataset.ideFlag]));
+  delegate('[data-ide-flag]', 'click', (e, t) => {
+    const k = t.dataset.ideFlag; IDE.flags[k] = !IDE.flags[k]; store.set('sain.ideFlags', IDE.flags); paintFlags();
+    if (k === 'ghost' && !IDE.flags.ghost) ghostClear();
+    toast((k === 'ghost' ? 'Ghost text ' : 'Auto-heal ') + (IDE.flags[k] ? 'on' : 'off') + (IDE.flags[k] && !IDE.byok() ? ' (needs your own API key)' : ''));
+  });
+  paintFlags(); icons();
 
   /* ---------- Boot Studio ---------- */
   editor.value = state.code = DEFAULT_CODE;
