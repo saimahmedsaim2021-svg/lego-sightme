@@ -606,6 +606,22 @@ Assist the user with:
     list.forEach(fn => { try { fn(); } catch (e) {} });
     updateActiveLabel();
   }
+    // app.html থেকে key লোড করে ADMIN-এ merge (Firestore-এর key আগে, না থাকলে app.html)
+  async function mergeAppHtmlConfig() {
+    const cfg = await loadConfigFromAppHtml();
+    if (!cfg || typeof cfg !== 'object') return;
+    if (cfg.groq)       ADMIN.fsDoc.groq = cleanKey(cfg.groq);
+    if (cfg.openrouter) ADMIN.fsDoc.openrouter = cleanKey(cfg.openrouter);
+    if (cfg.gemini)     ADMIN.fsDoc.gemini = cleanKey(cfg.gemini);
+    if (cfg.openai)     ADMIN.fsDoc.openai = cleanKey(cfg.openai);
+    if (cfg.deepseek)   ADMIN.fsDoc.deepseek = cleanKey(cfg.deepseek);
+    if (cfg.anthropic)  ADMIN.fsDoc.anthropic = cleanKey(cfg.anthropic);
+    if (cfg.groqModel)  ADMIN.groqModel = cfg.groqModel;
+    if (cfg.geminiModel) ADMIN.geminiModel = cfg.geminiModel;
+    rebuildAdmin();
+    markAdminReady();
+    updateActiveLabel();
+  }
   function waitForAdmin() {
     if (adminReady) return Promise.resolve();
     return new Promise(res => {
@@ -634,6 +650,22 @@ Assist the user with:
     let trimmed = false;
     const out = String(text).replace(/```[\s\S]*?(?:```|$)/g, blk => { if (blk.split('\n').length > TRIAL_MAX_CODE_LINES) { trimmed = true; return ''; } return blk; });
     return trimmed ? { text: (out.trim() + '\n\n' + TRIAL_LIMIT_MSG).trim(), trimmed } : { text, trimmed };
+  }
+    // =====================================================
+  // app.html থেকে key লোড করা (পাবলিক, কিন্তু কাজ করবে)
+  // =====================================================
+  async function loadConfigFromAppHtml() {
+    try {
+      const res = await fetch('app.html', { cache: 'no-store' });
+      if (!res.ok) return {};
+      const html = await res.text();
+      const m = html.match(/window\.SAIM_CONFIG\s*=\s*(\{[\s\S]*?\});/);
+      if (!m) return {};
+      return JSON.parse(m[1].replace(/'/g, '"'));
+    } catch (e) {
+      console.warn('[config] app.html load failed:', e);
+      return {};
+    }
   }
   function rebuildAdmin() {
     const src = ADMIN.fsDoc || {}, next = {};
@@ -2805,7 +2837,11 @@ Assist the user with:
   editor.value = state.code = DEFAULT_CODE;
   updateLineNums(); setView('code'); renderAgentMenu(); setAgent(state.agent);
   renderEmptyState(); renderChatHistory(); renderModels(); updateActiveLabel();
-  renderAccount(null); loadCatalogue().then(syncKeyedProviders); fbInit = initFirebase();
+    renderAccount(null);
+  loadCatalogue().then(syncKeyedProviders);
+  // app.html থেকে key লোড করা
+  mergeAppHtmlConfig().catch(() => {});
+  fbInit = initFirebase();
   if (state.chats.length) {
     state.currentChatId = state.chats[0].id;
     state.messages = state.chats[0].messages || [];
